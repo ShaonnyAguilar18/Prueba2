@@ -3112,7 +3112,7 @@ function updateMoneyRequestDescription(
     policyCategories: OnyxEntry<OnyxTypes.PolicyCategories>,
 ) {
     const transactionChanges: TransactionChanges = {
-        comment,
+        comment: ReportUtils.getParsedComment(comment),
     };
     const allReports = ReportConnection.getAllReports();
     const transactionThreadReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${transactionThreadReportID}`] ?? null;
