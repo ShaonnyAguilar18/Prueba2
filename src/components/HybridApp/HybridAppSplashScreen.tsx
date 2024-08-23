@@ -1,55 +1,39 @@
-import type React from 'react';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {NativeEventEmitter, NativeModules} from 'react-native';
 import type {NativeModule} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
-import type {OnyxEntry} from 'react-native-onyx';
 import {InitialURLContext} from '@components/InitialURLContextProvider';
 import useExitTo from '@hooks/useExitTo';
-import useSplashScreen from '@hooks/useSplashScreen';
-import BootSplash from '@libs/BootSplash';
+import getPlatform from '@libs/getPlatform';
 import Log from '@libs/Log';
 import Navigation from '@libs/Navigation/Navigation';
 import * as SessionUtils from '@libs/SessionUtils';
-import * as Welcome from '@userActions/Welcome';
 import CONST from '@src/CONST';
+import {SplashScreenStateContext} from '@src/Expensify';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {HybridAppRoute, Route} from '@src/ROUTES';
 import ROUTES from '@src/ROUTES';
-import type {TryNewDot} from '@src/types/onyx';
 
-type HybridAppMiddlewareProps = {
+type HybridAppSplashScreenProps = {
     authenticated: boolean;
-    children: React.ReactNode;
 };
 
-const onboardingStatusSelector = (tryNewDot: OnyxEntry<TryNewDot>) => {
-    let completedHybridAppOnboarding = tryNewDot?.classicRedirect?.completedHybridAppOnboarding;
-
-    if (typeof completedHybridAppOnboarding === 'string') {
-        completedHybridAppOnboarding = completedHybridAppOnboarding === 'true';
-    }
-
-    return completedHybridAppOnboarding;
-};
+const isIOSNative = getPlatform() === CONST.PLATFORM.IOS;
 
 /*
  * HybridAppMiddleware is responsible for handling BootSplash visibility correctly.
  * It is crucial to make transitions between OldDot and NewDot look smooth.
  * The middleware assumes that the entry point for HybridApp is the /transition route.
  */
-function HybridAppMiddleware({children, authenticated}: HybridAppMiddlewareProps) {
-    const {isSplashHidden, setIsSplashHidden} = useSplashScreen();
-    const [startedTransition, setStartedTransition] = useState(false);
-    const [finishedTransition, setFinishedTransition] = useState(false);
-
+function HybridAppSplashScreen({authenticated}: HybridAppSplashScreenProps) {
     const initialURL = useContext(InitialURLContext);
+    const {splashScreenState, setSplashScreenState} = useContext(SplashScreenStateContext);
+
     const exitToParam = useExitTo();
     const [exitTo, setExitTo] = useState<Route | HybridAppRoute | undefined>();
 
     const [isAccountLoading] = useOnyx(ONYXKEYS.ACCOUNT, {selector: (account) => account?.isLoading ?? false});
     const [sessionEmail] = useOnyx(ONYXKEYS.SESSION, {selector: (session) => session?.email});
-    const [completedHybridAppOnboarding] = useOnyx(ONYXKEYS.NVP_TRYNEWDOT, {selector: onboardingStatusSelector});
 
     const maxTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -61,71 +45,54 @@ function HybridAppMiddleware({children, authenticated}: HybridAppMiddlewareProps
 
         maxTimeoutRef.current = setTimeout(() => {
             Log.info('[HybridApp] Forcing transition due to unknown problem', true);
-            setStartedTransition(true);
             setExitTo(ROUTES.HOME);
+            setSplashScreenState(CONST.BOOT_SPLASH_STATE.STARTED_TRANSITION);
         }, 3000);
-    }, []);
-    /**
-     * This useEffect tracks changes of `nvp_tryNewDot` value.
-     * We propagate it from OldDot to NewDot with native method due to limitations of old app.
-     */
-    useEffect(() => {
-        if (completedHybridAppOnboarding === undefined) {
-            return;
-        }
-
-        if (!NativeModules.HybridAppModule) {
-            Log.hmmm(`[HybridApp] Onboarding status has changed, but the HybridAppModule is not defined`);
-            return;
-        }
-
-        Log.info(`[HybridApp] Onboarding status has changed. Propagating new value to OldDot`, true, {completedHybridAppOnboarding});
-        NativeModules.HybridAppModule.completeOnboarding(completedHybridAppOnboarding);
-    }, [completedHybridAppOnboarding]);
+    }, [setSplashScreenState]);
 
     // In iOS, the HybridApp defines the `onReturnToOldDot` event.
     // If we frequently transition from OldDot to NewDot during a single app lifecycle,
     // we need to artificially display the bootsplash since the app is booted only once.
     // Therefore, isSplashHidden needs to be updated at the appropriate time.
     useEffect(() => {
-        if (!NativeModules.HybridAppModule) {
+        if (!NativeModules.HybridAppModule && !isIOSNative) {
             return;
         }
         const HybridAppEvents = new NativeEventEmitter(NativeModules.HybridAppModule as unknown as NativeModule);
         const listener = HybridAppEvents.addListener(CONST.EVENTS.ON_RETURN_TO_OLD_DOT, () => {
             Log.info('[HybridApp] `onReturnToOldDot` event received. Resetting state of HybridAppMiddleware', true);
-            setIsSplashHidden(false);
-            setStartedTransition(false);
-            setFinishedTransition(false);
+            setSplashScreenState(CONST.BOOT_SPLASH_STATE.OPENED);
             setExitTo(undefined);
         });
 
         return () => {
             listener.remove();
         };
-    }, [setIsSplashHidden]);
+    }, [setSplashScreenState]);
 
     // Save `exitTo` when we reach /transition route.
     // `exitTo` should always exist during OldDot -> NewDot transitions.
     useEffect(() => {
-        if (!NativeModules.HybridAppModule || !exitToParam || exitTo) {
+        if (!NativeModules.HybridAppModule || !exitToParam || splashScreenState !== CONST.BOOT_SPLASH_STATE.OPENED) {
             return;
         }
 
         Log.info('[HybridApp] Saving `exitTo` for later', true, {exitTo: exitToParam});
-        setExitTo(exitToParam);
-
         Log.info(`[HybridApp] Started transition`, true);
-        setStartedTransition(true);
-    }, [exitTo, exitToParam]);
+        setExitTo(exitToParam);
+        setSplashScreenState(CONST.BOOT_SPLASH_STATE.STARTED_TRANSITION);
+        if (maxTimeoutRef.current) {
+            clearTimeout(maxTimeoutRef.current);
+        }
+    }, [exitTo, exitToParam, setSplashScreenState, splashScreenState]);
 
     useEffect(() => {
-        if (!startedTransition || finishedTransition) {
+        if (splashScreenState !== CONST.BOOT_SPLASH_STATE.STARTED_TRANSITION) {
             return;
         }
 
-        const transitionURL = NativeModules.HybridAppModule ? `${CONST.DEEPLINK_BASE_URL}${initialURL ?? ''}` : initialURL;
-        const isLoggingInAsNewUser = SessionUtils.isLoggingInAsNewUser(transitionURL ?? undefined, sessionEmail);
+        const transitionURL = `${CONST.DEEPLINK_BASE_URL}${initialURL ?? ''}`;
+        const isLoggingInAsNewUser = SessionUtils.isLoggingInAsNewUser(transitionURL, sessionEmail);
 
         // We need to wait with navigating to exitTo until all login-related actions are complete.
         if (!authenticated || isLoggingInAsNewUser || isAccountLoading) {
@@ -136,41 +103,27 @@ function HybridAppMiddleware({children, authenticated}: HybridAppMiddlewareProps
             Navigation.isNavigationReady().then(() => {
                 // We need to remove /transition from route history.
                 // `useExitTo` returns undefined for routes other than /transition.
-                if (exitToParam) {
+                if (exitToParam && Navigation.getActiveRoute().includes(ROUTES.TRANSITION_BETWEEN_APPS)) {
                     Log.info('[HybridApp] Removing /transition route from history', true);
                     Navigation.goBack();
                 }
 
-                Log.info('[HybridApp] Navigating to `exitTo` route', true, {exitTo});
-                Navigation.navigate(Navigation.parseHybridAppUrl(exitTo));
+                if (exitTo !== ROUTES.HOME) {
+                    Log.info('[HybridApp] Navigating to `exitTo` route', true, {exitTo});
+                    Navigation.navigate(Navigation.parseHybridAppUrl(exitTo));
+                }
                 setExitTo(undefined);
 
                 setTimeout(() => {
-                    Log.info('[HybridApp] Setting `finishedTransition` to true', true);
-                    setFinishedTransition(true);
+                    setSplashScreenState(CONST.BOOT_SPLASH_STATE.FINISHED_TRANSITION);
                 }, CONST.SCREEN_TRANSITION_END_TIMEOUT);
             });
         }
-    }, [authenticated, exitTo, exitToParam, finishedTransition, initialURL, isAccountLoading, sessionEmail, startedTransition]);
+    }, [authenticated, exitTo, exitToParam, initialURL, isAccountLoading, sessionEmail, setSplashScreenState, splashScreenState]);
 
-    useEffect(() => {
-        if (!finishedTransition || isSplashHidden) {
-            return;
-        }
-
-        Log.info('[HybridApp] Finished transition, hiding BootSplash', true);
-        BootSplash.hide().then(() => {
-            setIsSplashHidden(true);
-            if (authenticated) {
-                Log.info('[HybridApp] Handling onboarding flow', true);
-                Welcome.handleHybridAppOnboarding();
-            }
-        });
-    }, [authenticated, finishedTransition, isSplashHidden, setIsSplashHidden]);
-
-    return children;
+    return null;
 }
 
-HybridAppMiddleware.displayName = 'HybridAppMiddleware';
+HybridAppSplashScreen.displayName = 'HybridAppSplashScreen';
 
-export default HybridAppMiddleware;
+export default HybridAppSplashScreen;
