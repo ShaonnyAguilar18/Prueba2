@@ -8,6 +8,7 @@ import ComposeProviders from '@components/ComposeProviders';
 import OptionsListContextProvider from '@components/OptionListContextProvider';
 import {SearchContextProvider} from '@components/Search/SearchContext';
 import SearchRouter from '@components/Search/SearchRouter/SearchRouter';
+import FullScreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import useActiveWorkspace from '@hooks/useActiveWorkspace';
 import usePermissions from '@hooks/usePermissions';
 import useResponsiveLayout from '@hooks/useResponsiveLayout';
@@ -399,7 +400,7 @@ function AuthScreens() {
         cardStyle: styles.cardStyleNavigator,
     };
     if (isLoadingOnyxValue(sessionStatus, lastOpenedPublicRoomIDStatus, initialLastUpdateIDAppliedToClientStatus)) {
-        return;
+        return <FullScreenLoadingIndicator />;
     }
 
     return (
