@@ -74,6 +74,7 @@ function WorkspaceReportFieldsPage({
         return Object.fromEntries(Object.entries(policy.fieldList).filter(([_, value]) => value.fieldID !== 'text_title'));
     }, [policy]);
     const [selectedReportFields, setSelectedReportFields] = useState<PolicyReportField[]>([]);
+    const [shouldPreserveSelection, setShouldPreserveSelection] = useState(false);
     const [deleteReportFieldsConfirmModalVisible, setDeleteReportFieldsConfirmModalVisible] = useState(false);
     const hasAccountingConnections = PolicyUtils.hasAccountingConnections(policy);
     const isConnectedToAccounting = Object.keys(policy?.connections ?? {}).length > 0;
@@ -92,10 +93,12 @@ function WorkspaceReportFieldsPage({
     useFocusEffect(fetchReportFields);
 
     useEffect(() => {
-        if (isFocused) {
+        if (isFocused || shouldPreserveSelection) {
+            setShouldPreserveSelection(false);
             return;
         }
         setSelectedReportFields([]);
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isFocused]);
 
     const reportFieldsSections = useMemo(() => {
@@ -146,6 +149,15 @@ function WorkspaceReportFieldsPage({
 
     const navigateToReportFieldsSettings = (reportField: ReportFieldForList) => {
         Navigation.navigate(ROUTES.WORKSPACE_REPORT_FIELDS_SETTINGS.getRoute(policyID, reportField.fieldID));
+    };
+
+    const onSelectReportField = (field: ReportFieldForList) => {
+        if (selectionMode?.isEnabled) {
+            updateSelectedReportFields(field);
+            return;
+        }
+        setShouldPreserveSelection(true);
+        navigateToReportFieldsSettings(field);
     };
 
     const handleDeleteReportFields = () => {
@@ -304,7 +316,7 @@ function WorkspaceReportFieldsPage({
                         onTurnOnSelectionMode={(item) => item && updateSelectedReportFields(item)}
                         sections={reportFieldsSections}
                         onCheckboxPress={updateSelectedReportFields}
-                        onSelectRow={navigateToReportFieldsSettings}
+                        onSelectRow={onSelectReportField}
                         onSelectAll={toggleAllReportFields}
                         ListItem={TableListItem}
                         customListHeader={getCustomListHeader()}

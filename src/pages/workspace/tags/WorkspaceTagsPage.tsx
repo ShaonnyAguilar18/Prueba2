@@ -65,6 +65,7 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
     const policy = usePolicy(policyID);
     const [policyTags] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_TAGS}${policyID}`);
     const {selectionMode} = useMobileSelectionMode();
+    const [shouldPreserveSelection, setShouldPreserveSelection] = useState(false);
     const {environmentURL} = useEnvironment();
     const isConnectedToAccounting = Object.keys(policy?.connections ?? {}).length > 0;
     const currentConnectionName = PolicyUtils.getCurrentConnectionName(policy);
@@ -80,10 +81,12 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
     useFocusEffect(fetchTags);
 
     useEffect(() => {
-        if (isFocused) {
+        if (isFocused || shouldPreserveSelection) {
+            setShouldPreserveSelection(false);
             return;
         }
         setSelectedTags({});
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isFocused]);
 
     const getPendingAction = (policyTagList: PolicyTagList): PendingAction | undefined => {
@@ -185,6 +188,15 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
             return;
         }
         Navigation.navigate(ROUTES.WORKSPACE_TAG_SETTINGS.getRoute(policyID, 0, tag.value));
+    };
+
+    const onSelectTag = (tag: TagListItem) => {
+        if (selectionMode?.isEnabled) {
+            toggleTag(tag);
+            return;
+        }
+        setShouldPreserveSelection(true);
+        navigateToTagSettings(tag);
     };
 
     const selectedTagsArray = Object.keys(selectedTags).filter((key) => selectedTags[key]);
@@ -300,6 +312,7 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
                 icon: Expensicons.Table,
                 text: translate('spreadsheet.importSpreadsheet'),
                 onSelected: () => {
+                    setShouldPreserveSelection(true);
                     if (isOffline) {
                         Modal.close(() => setIsOfflineModalVisible(true));
                         return;
@@ -420,7 +433,7 @@ function WorkspaceTagsPage({route}: WorkspaceTagsPageProps) {
                         onTurnOnSelectionMode={(item) => item && toggleTag(item)}
                         sections={[{data: tagList, isDisabled: false}]}
                         onCheckboxPress={toggleTag}
-                        onSelectRow={navigateToTagSettings}
+                        onSelectRow={onSelectTag}
                         shouldSingleExecuteRowSelect={!canSelectMultiple}
                         onSelectAll={toggleAllTags}
                         ListItem={TableListItem}

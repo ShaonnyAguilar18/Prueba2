@@ -55,6 +55,7 @@ function WorkspaceTaxesPage({
     const [selectedTaxesIDs, setSelectedTaxesIDs] = useState<string[]>([]);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const {selectionMode} = useMobileSelectionMode();
+    const [shouldPreserveSelection, setShouldPreserveSelection] = useState(false);
     const defaultExternalID = policy?.taxRates?.defaultExternalID;
     const foreignTaxDefault = policy?.taxRates?.foreignTaxDefault;
     const isFocused = useIsFocused();
@@ -77,10 +78,12 @@ function WorkspaceTaxesPage({
     );
 
     useEffect(() => {
-        if (isFocused) {
+        if (isFocused || shouldPreserveSelection) {
+            setShouldPreserveSelection(false);
             return;
         }
         setSelectedTaxesIDs([]);
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isFocused]);
 
     const textForDefault = useCallback(
@@ -180,6 +183,15 @@ function WorkspaceTaxesPage({
             return;
         }
         Navigation.navigate(ROUTES.WORKSPACE_TAX_EDIT.getRoute(policyID, taxRate.keyForList));
+    };
+
+    const onSelectTax = (tax: ListItem) => {
+        if (selectionMode?.isEnabled) {
+            toggleTax(tax);
+            return;
+        }
+        setShouldPreserveSelection(true);
+        navigateToEditTaxRate(tax);
     };
 
     const dropdownMenuOptions = useMemo(() => {
@@ -313,7 +325,7 @@ function WorkspaceTaxesPage({
                     onTurnOnSelectionMode={(item) => item && toggleTax(item)}
                     sections={[{data: taxesList, isDisabled: false}]}
                     onCheckboxPress={toggleTax}
-                    onSelectRow={navigateToEditTaxRate}
+                    onSelectRow={onSelectTax}
                     onSelectAll={toggleAllTaxes}
                     ListItem={TableListItem}
                     customListHeader={getCustomListHeader()}
