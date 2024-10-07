@@ -723,7 +723,7 @@ const CONST = {
     EXPENSIFY_PACKAGE_FOR_SAGE_INTACCT_FILE_NAME: 'ExpensifyPackageForSageIntacct',
     SAGE_INTACCT_INSTRUCTIONS: 'https://help.expensify.com/articles/expensify-classic/integrations/accounting-integrations/Sage-Intacct',
     HOW_TO_CONNECT_TO_SAGE_INTACCT: 'https://help.expensify.com/articles/expensify-classic/integrations/accounting-integrations/Sage-Intacct#how-to-connect-to-sage-intacct',
-    PRICING: `https://www.expensify.com/pricing`,
+    PRICING: 'https://www.expensify.com/pricing',
     COMPANY_CARDS_HELP: 'https://help.expensify.com/articles/expensify-classic/connect-credit-cards/company-cards/Commercial-Card-Feeds',
     CUSTOM_REPORT_NAME_HELP_URL: 'https://help.expensify.com/articles/expensify-classic/spending-insights/Custom-Templates',
     CONFIGURE_REIMBURSEMENT_SETTINGS_HELP_URL: 'https://help.expensify.com/articles/expensify-classic/workspaces/Configure-Reimbursement-Settings',
@@ -4550,7 +4550,7 @@ const CONST = {
                     autoCompleted: false,
                     title: 'Meet your setup specialist',
                     description: ({adminsRoomLink}) =>
-                        `Meet your setup specialist, who can answer any questions as you get started with Expensify. Yes, a real human!\n` +
+                        'Meet your setup specialist, who can answer any questions as you get started with Expensify. Yes, a real human!\n' +
                         '\n' +
                         `Chat with the specialist in your [#admins room](${adminsRoomLink}).`,
                 },
@@ -5687,8 +5687,8 @@ const CONST = {
                 id: 'approvals' as const,
                 alias: 'approvals' as const,
                 name: 'Advanced Approvals' as const,
-                title: `workspace.upgrade.approvals.title` as const,
-                description: `workspace.upgrade.approvals.description` as const,
+                title: 'workspace.upgrade.approvals.title' as const,
+                description: 'workspace.upgrade.approvals.description' as const,
                 icon: 'AdvancedApprovalsSquare',
             },
             glCodes: {
@@ -5758,7 +5758,7 @@ const CONST = {
     BOOT_SPLASH_STATE: {
         VISIBLE: 'visible',
         READY_TO_BE_HIDDEN: 'readyToBeHidden',
-        HIDDEN: `hidden`,
+        HIDDEN: 'hidden',
     },
 
     CSV_IMPORT_COLUMNS: {

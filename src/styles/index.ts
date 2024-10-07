@@ -3010,7 +3010,7 @@ const styles = (theme: ThemeColors) =>
         },
 
         flipUpsideDown: {
-            transform: `rotate(180deg)`,
+            transform: 'rotate(180deg)',
         },
 
         navigationScreenCardStyle: {
@@ -3344,7 +3344,7 @@ const styles = (theme: ThemeColors) =>
             alignItems: 'center',
             flexDirection: 'row',
             justifyContent: 'space-between',
-            boxShadow: `${theme.shadow}`,
+            boxShadow: theme.shadow,
             ...spacing.p5,
         },
 

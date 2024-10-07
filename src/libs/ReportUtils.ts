@@ -2822,7 +2822,7 @@ function isReportFieldOfTypeTitle(reportField: OnyxEntry<PolicyReportField>): bo
  * Check if Report has any held expenses
  */
 function isHoldCreator(transaction: OnyxEntry<Transaction>, reportID: string): boolean {
-    const holdReportAction = ReportActionsUtils.getReportAction(reportID, `${transaction?.comment?.hold ?? ''}`);
+    const holdReportAction = ReportActionsUtils.getReportAction(reportID, transaction?.comment?.hold ?? '');
     return isActionCreator(holdReportAction);
 }
 
@@ -4629,7 +4629,7 @@ function getIOUReportActionMessage(iouReportID: string, type: string, total: num
             paymentMethodMessage = ' with Expensify';
             break;
         default:
-            paymentMethodMessage = ` elsewhere`;
+            paymentMethodMessage = ' elsewhere';
             break;
     }
 

@@ -11836,7 +11836,7 @@ function getCommitHistoryAsJSON(fromTag, toTag) {
         spawnedProcess.on('close', (code) => {
             if (code !== 0) {
                 console.log('code: ', code);
-                return reject(new Error(`${stderr}`));
+                return reject(new Error(stderr));
             }
             resolve(stdout);
         });
@@ -12158,7 +12158,7 @@ class GithubUtils {
                         const merger = internalQAPRMap[URL];
                         const mergerMention = `@${merger}`;
                         issueBody += `${resolvedInternalQAPRs.includes(URL) ? '- [x]' : '- [ ]'} `;
-                        issueBody += `${URL}`;
+                        issueBody += URL;
                         issueBody += ` - ${mergerMention}`;
                         issueBody += '\r\n';
                     });

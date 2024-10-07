@@ -12721,7 +12721,7 @@ async function run() {
         if (date) {
             message += `on ${date}`;
         }
-        message += `🚀`;
+        message += '🚀';
         message += `\n\nplatform | result\n---|---\n🤖 android 🤖|${androidResult}\n🖥 desktop 🖥|${desktopResult}`;
         message += `\n🍎 iOS 🍎|${iOSResult}\n🕸 web 🕸|${webResult}`;
         if (deployVerb === 'Cherry-picked' && !/no ?qa/gi.test(prTitle ?? '')) {
@@ -13192,7 +13192,7 @@ class GithubUtils {
                         const merger = internalQAPRMap[URL];
                         const mergerMention = `@${merger}`;
                         issueBody += `${resolvedInternalQAPRs.includes(URL) ? '- [x]' : '- [ ]'} `;
-                        issueBody += `${URL}`;
+                        issueBody += URL;
                         issueBody += ` - ${mergerMention}`;
                         issueBody += '\r\n';
                     });
