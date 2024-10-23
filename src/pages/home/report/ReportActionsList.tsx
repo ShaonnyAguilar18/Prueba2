@@ -216,7 +216,7 @@ function ReportActionsList({
     /**
      * The reportActionID the unread marker should display above
      */
-    const unreadMarkerReportActionID = useMemo(() => {
+    const {unreadMarkerReportActionID, unreadMarkerReportActionIndex} = useMemo(() => {
         const shouldDisplayNewMarker = (reportAction: OnyxTypes.ReportAction, index: number): boolean => {
             const nextMessage = sortedVisibleReportActions.at(index + 1);
             const isCurrentMessageUnread = isMessageUnread(reportAction, unreadMarkerTime);
@@ -231,11 +231,11 @@ function ReportActionsList({
             const reportAction = sortedVisibleReportActions.at(index);
 
             if (reportAction && shouldDisplayNewMarker(reportAction, index)) {
-                return reportAction.reportActionID;
+                return {unreadMarkerReportActionID: reportAction.reportActionID, unreadMarkerReportActionIndex: index};
             }
         }
 
-        return null;
+        return {unreadMarkerReportActionID: null, unreadMarkerReportActionIndex: -1};
     }, [sortedVisibleReportActions, unreadMarkerTime]);
 
     /**
@@ -504,6 +504,27 @@ function ReportActionsList({
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [isFocused, isVisible]);
 
+    // Handles scrolling to the unread marker.
+    useEffect(() => {
+        if (unreadMarkerReportActionIndex === -1) {
+            return;
+        }
+        // This needs to be delayed or the scroll doesn't work.
+        const id = requestAnimationFrame(() => {
+            reportScrollManager.ref?.current?.scrollToIndex({
+                index: unreadMarkerReportActionIndex,
+                animated: true,
+                // This scrolls the unread action at the top of the screen.
+                viewPosition: 1,
+                // This makes sure that the unread indicator doesn't get cut off.
+                viewOffset: -5,
+            });
+        });
+        return () => {
+            cancelAnimationFrame(id);
+        };
+    }, [reportScrollManager, unreadMarkerReportActionIndex]);
+
     const renderItem = useCallback(
         ({item: reportAction, index}: ListRenderItemInfo<OnyxTypes.ReportAction>) => (
             <ReportActionsListItemRenderer
@@ -658,7 +679,7 @@ function ReportActionsList({
                     onScrollToIndexFailed={onScrollToIndexFailed}
                     extraData={extraData}
                     key={listID}
-                    shouldEnableAutoScrollToTopThreshold={shouldEnableAutoScrollToTopThreshold}
+                    shouldEnableAutoScrollToTopThreshold={!unreadMarkerReportActionID && shouldEnableAutoScrollToTopThreshold}
                 />
             </View>
         </>
