@@ -262,7 +262,7 @@ function ReportActionsView({
      */
     const fetchNewerAction = useCallback(
         (newestReportAction: OnyxTypes.ReportAction) => {
-            if (!hasNewerActions || isLoadingNewerReportActions || isLoadingInitialReportActions || isOffline) {
+            if (!hasNewerActions || isLoadingNewerReportActions || isLoadingInitialReportActions || (reportActionID && isOffline)) {
                 return;
             }
 
@@ -279,7 +279,7 @@ function ReportActionsView({
                 Report.getNewerActions(reportID, newestReportAction.reportActionID);
             }
         },
-        [isLoadingNewerReportActions, isLoadingInitialReportActions, isOffline, transactionThreadReport, reportActionIDMap, reportID, hasNewerActions],
+        [isLoadingNewerReportActions, isLoadingInitialReportActions, reportActionID, isOffline, transactionThreadReport, reportActionIDMap, reportID, hasNewerActions],
     );
 
     const hasMoreCached = reportActions.length < combinedReportActions.length;
