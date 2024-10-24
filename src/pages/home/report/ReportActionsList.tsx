@@ -505,12 +505,14 @@ function ReportActionsList({
     }, [isFocused, isVisible]);
 
     // Handles scrolling to the unread marker.
+    const didScrollToUnreadMarker = useRef(false);
     useEffect(() => {
-        if (unreadMarkerReportActionIndex === -1) {
+        if (unreadMarkerReportActionIndex === -1 || didScrollToUnreadMarker.current) {
             return;
         }
+        didScrollToUnreadMarker.current = true;
         // This needs to be delayed or the scroll doesn't work.
-        const id = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
             reportScrollManager.ref?.current?.scrollToIndex({
                 index: unreadMarkerReportActionIndex,
                 animated: true,
@@ -520,9 +522,6 @@ function ReportActionsList({
                 viewOffset: -5,
             });
         });
-        return () => {
-            cancelAnimationFrame(id);
-        };
     }, [reportScrollManager, unreadMarkerReportActionIndex]);
 
     const renderItem = useCallback(
