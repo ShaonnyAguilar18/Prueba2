@@ -350,9 +350,9 @@ function updateWaypoints(transactionID: string, waypoints: WaypointCollection, i
  */
 function dismissDuplicateTransactionViolation(transactionIDs: string[], dissmissedPersonalDetails: PersonalDetails) {
     const currentTransactionViolations = transactionIDs.map((id) => ({transactionID: id, violations: allTransactionViolation?.[id] ?? []}));
-    const currentTransactions = transactionIDs.map((id) => allTransactions?.[id]);
-    const transactionsReportActions = currentTransactions.map((transaction) => ReportActionsUtils.getIOUActionForReportID(transaction.reportID ?? '', transaction.transactionID ?? ''));
-    const isSubmitter = currentTransactions.every((transaction) => isCurrentUserSubmitter(transaction.reportID ?? ''));
+    const currentTransactions = transactionIDs.map((id) => TransactionUtils.getTransaction(id));
+    const transactionsReportActions = currentTransactions.map((transaction) => ReportActionsUtils.getIOUActionForReportID(transaction?.reportID ?? '', transaction?.transactionID ?? ''));
+    const isSubmitter = currentTransactions.every((transaction) => isCurrentUserSubmitter(transaction?.reportID ?? ''));
     const optimisticDissmidedViolationReportActions = transactionsReportActions.map(() => {
         if (isSubmitter) {
             return buildOptimisticUnHoldReportAction();
@@ -370,6 +370,7 @@ function dismissDuplicateTransactionViolation(transactionIDs: string[], dissmiss
             [optimisticDissmidedViolationReportActions.at(index)?.reportActionID ?? '']: optimisticDissmidedViolationReportActions.at(index) as ReportAction,
         },
     }));
+
     const optimisticDataTransactionViolations: OnyxUpdate[] = currentTransactionViolations.map((transactionViolations) => ({
         onyxMethod: Onyx.METHOD.MERGE,
         key: `${ONYXKEYS.COLLECTION.TRANSACTION_VIOLATIONS}${transactionViolations.transactionID}`,
@@ -381,11 +382,11 @@ function dismissDuplicateTransactionViolation(transactionIDs: string[], dissmiss
 
     const optimisticDataTransactions: OnyxUpdate[] = currentTransactions.map((transaction) => ({
         onyxMethod: Onyx.METHOD.MERGE,
-        key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`,
+        key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction?.transactionID}`,
         value: {
             ...transaction,
             comment: {
-                ...transaction.comment,
+                ...transaction?.comment,
                 dismissedViolations: {
                     duplicatedTransaction: {
                         [dissmissedPersonalDetails.login ?? '']: getUnixTime(new Date()),
@@ -405,7 +406,7 @@ function dismissDuplicateTransactionViolation(transactionIDs: string[], dissmiss
 
     const failureDataTransaction: OnyxUpdate[] = currentTransactions.map((transaction) => ({
         onyxMethod: Onyx.METHOD.MERGE,
-        key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction.transactionID}`,
+        key: `${ONYXKEYS.COLLECTION.TRANSACTION}${transaction?.transactionID}`,
         value: {
             ...transaction,
         },
