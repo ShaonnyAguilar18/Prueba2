@@ -32,6 +32,7 @@ import type SCREENS from '@src/SCREENS';
 type CodesStepProps = BackToParams;
 
 function CodesStep({backTo}: CodesStepProps) {
+    const [account] = useOnyx(ONYXKEYS.ACCOUNT);
     const theme = useTheme();
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -39,11 +40,8 @@ function CodesStep({backTo}: CodesStepProps) {
     // eslint-disable-next-line rulesdir/prefer-shouldUseNarrowLayout-instead-of-isSmallScreenWidth
     const {isExtraSmallScreenWidth, isSmallScreenWidth} = useResponsiveLayout();
     const [error, setError] = useState('');
+    const isUserValidated = account?.validated;
 
-    const [account] = useOnyx(ONYXKEYS.ACCOUNT);
-    const [user] = useOnyx(ONYXKEYS.USER);
-
-    const isUserValidated = user?.validated;
     const route = useRoute<RouteProp<SettingsNavigatorParamList, typeof SCREENS.SETTINGS.TWO_FACTOR_AUTH>>();
 
     const {setStep} = useTwoFactorAuthContext();
