@@ -4406,6 +4406,8 @@ const translations = {
         savedSearchesMenuItemTitle: 'Saved',
         groupedExpenses: 'grouped expenses',
         bulkActions: {
+            approve: 'Approve',
+            pay: 'Pay',
             delete: 'Delete',
             hold: 'Hold',
             unhold: 'Unhold',
