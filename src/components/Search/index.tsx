@@ -97,9 +97,17 @@ function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentCo
     const navigation = useNavigation<StackNavigationProp<AuthScreensParamList>>();
     const isFocused = useIsFocused();
     const lastSearchResultsRef = useRef<OnyxEntry<SearchResults>>();
-    const {setCurrentSearchHash, setSelectedTransactions, selectedTransactions, clearSelectedTransactions, setShouldShowStatusBarLoading, lastSearchType, setLastSearchType} =
-        useSearchContext();
-    const {selectionMode} = useMobileSelectionMode(false);
+    const {
+        setCurrentSearchHash,
+        setSelectedTransactions,
+        selectedTransactions,
+        clearSelectedTransactions,
+        shouldTurnOffSelectionMode,
+        setShouldShowStatusBarLoading,
+        lastSearchType,
+        setLastSearchType,
+    } = useSearchContext();
+    const {selectionMode} = useMobileSelectionMode();
     const [offset, setOffset] = useState(0);
 
     const {type, status, sortBy, sortOrder, hash} = queryJSON;
@@ -121,6 +129,13 @@ function Search({queryJSON, onSearchListScroll, isSearchScreenFocused, contentCo
         clearSelectedTransactions(hash);
         setCurrentSearchHash(hash);
     }, [hash, clearSelectedTransactions, setCurrentSearchHash]);
+
+    useEffect(() => {
+        const selectedKeys = Object.keys(selectedTransactions).filter((key) => selectedTransactions[key]);
+        if (selectedKeys.length === 0 && selectionMode?.isEnabled && shouldTurnOffSelectionMode) {
+            turnOffMobileSelectionMode();
+        }
+    }, [selectedTransactions, selectionMode?.isEnabled, shouldTurnOffSelectionMode]);
 
     useEffect(() => {
         const selectedKeys = Object.keys(selectedTransactions).filter((key) => selectedTransactions[key]);
