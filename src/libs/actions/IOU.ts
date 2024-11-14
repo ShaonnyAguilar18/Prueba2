@@ -2631,6 +2631,7 @@ function getUpdateMoneyRequestParams(
 
     if (updatedMoneyRequestReport) {
         updatedMoneyRequestReport.cachedTotal = CurrencyUtils.convertToDisplayString(updatedMoneyRequestReport.total, transactionDetails?.currency);
+        updatedMoneyRequestReport.lastReadTime = DateUtils.getDBTimeWithSkew();
     }
 
     optimisticData.push(
