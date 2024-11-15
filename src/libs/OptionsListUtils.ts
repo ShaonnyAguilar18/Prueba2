@@ -2187,6 +2187,39 @@ function getPersonalDetailSearchTerms(item: Partial<ReportUtils.OptionData>) {
 function getCurrentUserSearchTerms(item: ReportUtils.OptionData) {
     return [item.text ?? '', item.login ?? '', item.login?.replace(CONST.EMAIL_SEARCH_REGEX, '') ?? ''];
 }
+
+type PickUserToInviteParams = {
+    canInviteUser: boolean;
+    recentReports: ReportUtils.OptionData[];
+    personalDetails: ReportUtils.OptionData[];
+    searchValue: string;
+    config?: FilterOptionsConfig;
+    optionsToExclude: Option[];
+};
+
+const pickUserToInvite = ({canInviteUser, recentReports, personalDetails, searchValue, config, optionsToExclude}: PickUserToInviteParams) => {
+    let userToInvite = null;
+    if (canInviteUser) {
+        if (recentReports.length === 0 && personalDetails.length === 0) {
+            userToInvite = getUserToInviteOption({
+                searchValue,
+                selectedOptions: config?.selectedOptions,
+                optionsToExclude,
+            });
+        }
+    }
+
+    return userToInvite;
+};
+
+/**
+ * Remove the personal details for the DMs that are already in the recent reports so that we don't show duplicates
+ */
+function filteredPersonalDetailsOfRecentReports(recentReports: ReportUtils.OptionData[], personalDetails: ReportUtils.OptionData[]) {
+    const excludedLogins = new Set(recentReports.map((report) => report.login));
+    return personalDetails.filter((personalDetail) => !excludedLogins.has(personalDetail.login));
+}
+
 /**
  * Filters options based on the search input value
  */
@@ -2200,11 +2233,6 @@ function filterOptions(options: Options, searchInputValue: string, config?: Filt
         preferPolicyExpenseChat = false,
         preferRecentExpenseReports = false,
     } = config ?? {};
-    // Remove the personal details for the DMs that are already in the recent reports so that we don't show duplicates
-    function filteredPersonalDetailsOfRecentReports(recentReports: ReportUtils.OptionData[], personalDetails: ReportUtils.OptionData[]) {
-        const excludedLogins = new Set(recentReports.map((report) => report.login));
-        return personalDetails.filter((personalDetail) => !excludedLogins.has(personalDetail.login));
-    }
     if (searchInputValue.trim() === '' && maxRecentReportsToShow > 0) {
         const recentReports = options.recentReports.slice(0, maxRecentReportsToShow);
         const personalDetails = filteredPersonalDetailsOfRecentReports(recentReports, options.personalDetails);
@@ -2264,34 +2292,27 @@ function filterOptions(options: Options, searchInputValue: string, config?: Filt
         };
     }, options);
 
-    let {recentReports, personalDetails} = matchResults;
+    const {recentReports, personalDetails} = matchResults;
 
+    const noneReportPersonalDetails = filteredPersonalDetailsOfRecentReports(recentReports, personalDetails);
+
+    let filteredPersonalDetails: ReportUtils.OptionData[] = noneReportPersonalDetails;
+    let filteredRecentReports: ReportUtils.OptionData[] = recentReports;
     if (sortByReportTypeInSearch) {
-        personalDetails = filteredPersonalDetailsOfRecentReports(recentReports, personalDetails);
-        recentReports = recentReports.concat(personalDetails);
-        personalDetails = [];
-        recentReports = orderOptions(recentReports, searchValue);
+        filteredRecentReports = recentReports.concat(noneReportPersonalDetails);
+        filteredPersonalDetails = [];
     }
 
-    let userToInvite = null;
-    if (canInviteUser) {
-        if (recentReports.length === 0 && personalDetails.length === 0) {
-            userToInvite = getUserToInviteOption({
-                searchValue,
-                selectedOptions: config?.selectedOptions,
-                optionsToExclude,
-            });
-        }
-    }
+    const userToInvite = pickUserToInvite({canInviteUser, recentReports, personalDetails, searchValue, config, optionsToExclude});
 
     if (maxRecentReportsToShow > 0 && recentReports.length > maxRecentReportsToShow) {
         recentReports.splice(maxRecentReportsToShow);
     }
-    const filteredPersonalDetails = filteredPersonalDetailsOfRecentReports(recentReports, personalDetails);
 
+    const sortedRecentReports = orderOptions(filteredRecentReports, searchValue, {preferChatroomsOverThreads, preferPolicyExpenseChat, preferRecentExpenseReports});
     return {
         personalDetails: filteredPersonalDetails,
-        recentReports: orderOptions(recentReports, searchValue, {preferChatroomsOverThreads, preferPolicyExpenseChat, preferRecentExpenseReports}),
+        recentReports: sortedRecentReports,
         userToInvite,
         currentUserOption: matchResults.currentUserOption,
         categoryOptions: [],
@@ -2348,6 +2369,7 @@ export {
     formatMemberForList,
     formatSectionsFromSearchTerm,
     getShareLogOptions,
+    orderOptions,
     filterOptions,
     createOptionList,
     createOptionFromReport,
@@ -2362,7 +2384,9 @@ export {
     shouldUseBoldText,
     getAttendeeOptions,
     getAlternateText,
+    pickUserToInvite,
     hasReportErrors,
+    filteredPersonalDetailsOfRecentReports,
 };
 
 export type {MemberForList, CategorySection, CategoryTreeSection, Options, OptionList, SearchOption, PayeePersonalDetails, Category, Tax, TaxRatesOption, Option, OptionTree};
