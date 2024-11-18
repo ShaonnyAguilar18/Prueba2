@@ -1,4 +1,3 @@
-import * as Authentication from '@libs/Authentication';
 import Log from '@libs/Log';
 import * as MainQueue from '@libs/Network/MainQueue';
 import * as NetworkStore from '@libs/Network/NetworkStore';
@@ -6,6 +5,9 @@ import NetworkConnection from '@libs/NetworkConnection';
 import * as Request from '@libs/Request';
 import CONST from '@src/CONST';
 import type Middleware from './types';
+
+// Dynamic Import to avoid circular dependency
+const Authentication = () => import('@libs/Authentication');
 
 // We store a reference to the active authentication request so that we are only ever making one request to authenticate at a time.
 let isAuthenticating: Promise<void> | null = null;
@@ -15,15 +17,18 @@ function reauthenticate(commandName?: string): Promise<void> {
         return isAuthenticating;
     }
 
-    isAuthenticating = Authentication.reauthenticate(commandName)
-        .then((response) => {
-            isAuthenticating = null;
-            return response;
-        })
-        .catch((error) => {
-            isAuthenticating = null;
-            throw error;
-        });
+    isAuthenticating = Authentication().then((module) =>
+        module
+            .reauthenticate(commandName)
+            .then((response) => {
+                isAuthenticating = null;
+                return response;
+            })
+            .catch((error) => {
+                isAuthenticating = null;
+                throw error;
+            }),
+    );
 
     return isAuthenticating;
 }

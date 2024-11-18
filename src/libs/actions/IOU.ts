@@ -34,7 +34,6 @@ import * as CurrencyUtils from '@libs/CurrencyUtils';
 import DateUtils from '@libs/DateUtils';
 import DistanceRequestUtils from '@libs/DistanceRequestUtils';
 import * as ErrorUtils from '@libs/ErrorUtils';
-import * as FileUtils from '@libs/fileDownload/FileUtils';
 import GoogleTagManager from '@libs/GoogleTagManager';
 import * as IOUUtils from '@libs/IOUUtils';
 import * as LocalePhoneNumber from '@libs/LocalePhoneNumber';
@@ -76,6 +75,9 @@ import * as Tag from './Policy/Tag';
 import * as Report from './Report';
 import {getRecentWaypoints, sanitizeRecentWaypoints} from './Transaction';
 import * as TransactionEdit from './TransactionEdit';
+
+// Dynamic Import to avoid circular dependency
+const FileUtils = () => import('@libs/fileDownload/FileUtils');
 
 type IOURequestType = ValueOf<typeof CONST.IOU.REQUEST_TYPE>;
 
@@ -7970,7 +7972,9 @@ function navigateToStartStepIfScanFileCannotBeRead(
         }
         IOUUtils.navigateToStartMoneyRequestStep(requestType, iouType, transactionID, reportID);
     };
-    FileUtils.readFileAsync(receiptPath.toString(), receiptFilename, onSuccess, onFailure, receiptType);
+    FileUtils().then((module) => {
+        module.readFileAsync(receiptPath.toString(), receiptFilename, onSuccess, onFailure, receiptType);
+    });
 }
 
 /** Save the preferred payment method for a policy */
