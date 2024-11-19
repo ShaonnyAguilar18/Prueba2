@@ -44,7 +44,6 @@ import Navigation from '@libs/Navigation/Navigation';
 import * as NextStepUtils from '@libs/NextStepUtils';
 import {rand64} from '@libs/NumberUtils';
 import * as OptionsListUtils from '@libs/OptionsListUtils';
-import * as PersonalDetailsUtils from '@libs/PersonalDetailsUtils';
 import * as PhoneNumber from '@libs/PhoneNumber';
 import * as PolicyUtils from '@libs/PolicyUtils';
 import * as ReportActionsUtils from '@libs/ReportActionsUtils';
@@ -6862,23 +6861,6 @@ function isLastApprover(approvalChain: string[]): boolean {
     return approvalChain.at(-1) === currentUserEmail;
 }
 
-function getNextApproverAccountID(report: OnyxEntry<OnyxTypes.Report>) {
-    const policy = PolicyUtils.getPolicy(report?.policyID);
-    const approvalChain = ReportUtils.getApprovalChain(policy, report);
-    const submitToAccountID = PolicyUtils.getSubmitToAccountID(policy, report);
-
-    if (approvalChain.length === 0) {
-        return submitToAccountID;
-    }
-
-    const nextApproverEmail = approvalChain.length === 1 ? approvalChain.at(0) : approvalChain.at(approvalChain.indexOf(currentUserEmail) + 1);
-    if (!nextApproverEmail) {
-        return submitToAccountID;
-    }
-
-    return PersonalDetailsUtils.getAccountIDsByLogins([nextApproverEmail]).at(0);
-}
-
 function approveMoneyRequest(expenseReport: OnyxEntry<OnyxTypes.Report>, full?: boolean) {
     if (expenseReport?.policyID && SubscriptionUtils.shouldRestrictUserBillableActions(expenseReport.policyID)) {
         Navigation.navigate(ROUTES.RESTRICTED_ACTION.getRoute(expenseReport.policyID));
@@ -6897,7 +6879,7 @@ function approveMoneyRequest(expenseReport: OnyxEntry<OnyxTypes.Report>, full?: 
 
     const predictedNextStatus = isLastApprover(approvalChain) ? CONST.REPORT.STATUS_NUM.APPROVED : CONST.REPORT.STATUS_NUM.SUBMITTED;
     const predictedNextState = isLastApprover(approvalChain) ? CONST.REPORT.STATE_NUM.APPROVED : CONST.REPORT.STATE_NUM.SUBMITTED;
-    const managerID = isLastApprover(approvalChain) ? expenseReport?.managerID : getNextApproverAccountID(expenseReport);
+    const managerID = isLastApprover(approvalChain) ? expenseReport?.managerID : NextStepUtils.getNextApproverAccountID(expenseReport);
 
     const optimisticNextStep = NextStepUtils.buildNextStep(expenseReport, predictedNextStatus);
     const chatReport = ReportUtils.getReportOrDraftReport(expenseReport?.chatReportID);
@@ -8291,7 +8273,6 @@ function resolveDuplicates(params: TransactionMergeParams) {
 
 export {
     adjustRemainingSplitShares,
-    getNextApproverAccountID,
     approveMoneyRequest,
     canApproveIOU,
     cancelPayment,
