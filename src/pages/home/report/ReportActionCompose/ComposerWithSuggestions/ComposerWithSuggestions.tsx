@@ -102,12 +102,6 @@ type ComposerWithSuggestionsProps = Partial<ChildrenProps> & {
     /** Whether the input is disabled */
     disabled: boolean;
 
-    /** Whether the full composer is available */
-    isFullComposerAvailable: boolean;
-
-    /** Function to set whether the full composer is available */
-    setIsFullComposerAvailable: (isFullComposerAvailable: boolean) => void;
-
     /** Function to set whether the comment is empty */
     setIsCommentEmpty: (isCommentEmpty: boolean) => void;
 
@@ -227,8 +221,6 @@ function ComposerWithSuggestions(
         displayFileInModal,
         isBlockedFromConcierge,
         disabled,
-        isFullComposerAvailable,
-        setIsFullComposerAvailable,
         setIsCommentEmpty,
         handleSendMessage,
         shouldShowComposeInput,
@@ -271,7 +263,8 @@ function ComposerWithSuggestions(
     const [modal] = useOnyx(ONYXKEYS.MODAL);
     const [preferredSkinTone = CONST.EMOJI_DEFAULT_SKIN_TONE] = useOnyx(ONYXKEYS.PREFERRED_EMOJI_SKIN_TONE, {selector: EmojiUtils.getPreferredSkinToneIndex});
     const [editFocused] = useOnyx(ONYXKEYS.INPUT_FOCUSED);
-    const [parentReportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${parentReportID}`, {canEvict: false, initWithStoredValues: false});
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    const [parentReportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${parentReportID || '-1'}`, {canEvict: false, initWithStoredValues: false});
 
     const lastTextRef = useRef(value);
     useEffect(() => {
@@ -775,8 +768,6 @@ function ComposerWithSuggestions(
                     isDisabled={isBlockedFromConcierge || disabled}
                     selection={selection}
                     onSelectionChange={onSelectionChange}
-                    isFullComposerAvailable={isFullComposerAvailable}
-                    setIsFullComposerAvailable={setIsFullComposerAvailable}
                     isComposerFullSize={isComposerFullSize}
                     value={value}
                     testID="composer"
