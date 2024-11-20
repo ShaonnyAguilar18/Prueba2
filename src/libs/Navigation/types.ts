@@ -1377,6 +1377,7 @@ type RightModalNavigatorParamList = {
 
 type TravelNavigatorParamList = {
     [SCREENS.TRAVEL.MY_TRIPS]: undefined;
+    [SCREENS.TRAVEL.TRIP_DETAILS]: undefined;
 };
 
 type FullScreenNavigatorParamList = {
