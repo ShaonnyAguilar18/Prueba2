@@ -1,5 +1,5 @@
 import type {RouteProp} from '@react-navigation/native';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
@@ -35,6 +35,7 @@ import {isEmptyObject} from '@src/types/utils/EmptyObject';
 type CodesStepProps = BackToParams;
 
 function CodesStep({backTo}: CodesStepProps) {
+    const navigation = useNavigation();
     const theme = useTheme();
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -56,9 +57,12 @@ function CodesStep({backTo}: CodesStepProps) {
     const validateLoginError = ErrorUtils.getEarliestErrorField(loginData, 'validateLogin');
     const hasMagicCodeBeenSent = !!validateCodeAction?.validateCodeSent;
 
+    const [isValidateModalVisible, setIsValidateModalVisible] = useState(!isUserValidated);
+
     const {setStep} = useTwoFactorAuthContext();
 
     useEffect(() => {
+        setIsValidateModalVisible(!isUserValidated);
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         if (account?.requiresTwoFactorAuth || account?.recoveryCodes || !isUserValidated) {
             return;
@@ -66,6 +70,13 @@ function CodesStep({backTo}: CodesStepProps) {
         Session.toggleTwoFactorAuth(true);
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps -- We want to run this when component mounts
     }, [isUserValidated]);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', () => {
+            setIsValidateModalVisible(false);
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     return (
         <StepWrapper
@@ -173,7 +184,7 @@ function CodesStep({backTo}: CodesStepProps) {
                     title={translate('contacts.validateAccount')}
                     descriptionPrimary={translate('contacts.featureRequiresValidate')}
                     descriptionSecondary={translate('contacts.enterMagicCode', {contactMethod})}
-                    isVisible={!isUserValidated}
+                    isVisible={isValidateModalVisible}
                     hasMagicCodeBeenSent={hasMagicCodeBeenSent}
                     validatePendingAction={loginData?.pendingFields?.validateCodeSent}
                     sendValidateCode={() => User.requestValidateCodeAction()}
@@ -181,7 +192,10 @@ function CodesStep({backTo}: CodesStepProps) {
                     validateError={!isEmptyObject(validateLoginError) ? validateLoginError : ErrorUtils.getLatestErrorField(loginData, 'validateCodeSent')}
                     clearError={() => User.clearContactMethodErrors(contactMethod, !isEmptyObject(validateLoginError) ? 'validateLogin' : 'validateCodeSent')}
                     onModalHide={() => {}}
-                    onClose={() => TwoFactorAuthActions.quitAndNavigateBack(backTo)}
+                    onClose={() => {
+                        setIsValidateModalVisible(false);
+                        TwoFactorAuthActions.quitAndNavigateBack(backTo);
+                    }}
                 />
             </ScrollView>
         </StepWrapper>
