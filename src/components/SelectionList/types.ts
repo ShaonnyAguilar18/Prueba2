@@ -191,6 +191,9 @@ type ListItem = {
 
     /** The style to override the default appearance */
     itemStyle?: StyleProp<ViewStyle>;
+
+    /** Whether to prevent checkbox from being disabled */
+    shouldPreventDisableCheckboxIfDisabled?: boolean;
 };
 
 type TransactionListItemType = ListItem &
