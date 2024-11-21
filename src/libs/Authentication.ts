@@ -4,11 +4,16 @@ import type Response from '@src/types/onyx/Response';
 import * as Delegate from './actions/Delegate';
 import updateSessionAuthTokens from './actions/Session/updateSessionAuthTokens';
 import redirectToSignIn from './actions/SignInRedirect';
+import HttpsError from './Errors/HttpsError';
 import * as ErrorUtils from './ErrorUtils';
 import Log from './Log';
 import * as Network from './Network';
 import * as NetworkStore from './Network/NetworkStore';
 import requireParameters from './requireParameters';
+import Onyx from 'react-native-onyx';
+
+let authenticateCalls = 0;
+const CALLS_TO_FAIL = 10;
 
 type Parameters = {
     useExpensifyLogin?: boolean;
@@ -26,6 +31,7 @@ function Authenticate(parameters: Parameters): Promise<Response> {
 
     requireParameters(['partnerName', 'partnerPassword', 'partnerUserID', 'partnerUserSecret'], parameters, commandName);
 
+    authenticateCalls++;
     return Network.post(commandName, {
         // When authenticating for the first time, we pass useExpensifyLogin as true so we check
         // for credentials for the expensify partnerID to let users Authenticate with their expensify user
@@ -44,6 +50,17 @@ function Authenticate(parameters: Parameters): Promise<Response> {
 
         // Add email param so the first Authenticate request is logged on the server w/ this email
         email: parameters.email,
+    }).then((response) => {
+        if (authenticateCalls > CALLS_TO_FAIL) {
+            console.log('Ndebug Authenticate success after failing calls: ', CALLS_TO_FAIL);
+            Onyx.set('failedAuthenticate', false);
+            return response;
+        }
+        console.log('Ndebug failing to fetch in Authenticate. Call number: ', authenticateCalls);
+        Onyx.set('failedAuthenticate', true);
+        throw new HttpsError({
+            message: CONST.ERROR.FAILED_TO_FETCH,
+        });
     });
 }
 
