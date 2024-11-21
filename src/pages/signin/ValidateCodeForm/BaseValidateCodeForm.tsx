@@ -2,7 +2,7 @@ import {useIsFocused} from '@react-navigation/native';
 import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import type {ForwardedRef} from 'react';
 import {View} from 'react-native';
-import {useOnyx} from 'react-native-onyx';
+import Onyx, {useOnyx} from 'react-native-onyx';
 import Button from '@components/Button';
 import SafariFormWrapper from '@components/Form/SafariFormWrapper';
 import FormHelpMessage from '@components/FormHelpMessage';
@@ -21,10 +21,13 @@ import useThemeStyles from '@hooks/useThemeStyles';
 import AccountUtils from '@libs/AccountUtils';
 import canFocusInputOnScreenFocus from '@libs/canFocusInputOnScreenFocus';
 import * as ErrorUtils from '@libs/ErrorUtils';
+import {shouldUseOldApp} from '@libs/HybridApp';
 import * as ValidationUtils from '@libs/ValidationUtils';
 import ChangeExpensifyLoginLink from '@pages/signin/ChangeExpensifyLoginLink';
 import Terms from '@pages/signin/Terms';
+import {setIsSigningIn, setNewDotSignInState, setOldDotSignInError, setOldDotSignInState, setShouldResetSigningInLogic} from '@userActions/HybridApp';
 import * as SessionActions from '@userActions/Session';
+import {signOut} from '@userActions/Session';
 import * as User from '@userActions/User';
 import CONST from '@src/CONST';
 import type {TranslationPaths} from '@src/languages/types';
@@ -50,6 +53,10 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
     const [account] = useOnyx(ONYXKEYS.ACCOUNT);
     const [credentials] = useOnyx(ONYXKEYS.CREDENTIALS);
     const [session] = useOnyx(ONYXKEYS.SESSION);
+    const [tryNewDot] = useOnyx(ONYXKEYS.NVP_TRYNEWDOT);
+    const [hybridApp] = useOnyx(ONYXKEYS.HYBRID_APP, {
+        initialValue: {oldDotSignInState: CONST.HYBRID_APP_SIGN_IN_STATE.NOT_STARTED, newDotSignInState: CONST.HYBRID_APP_SIGN_IN_STATE.NOT_STARTED},
+    });
     const styles = useThemeStyles();
     const StyleUtils = useStyleUtils();
     const {translate} = useLocalize();
@@ -69,10 +76,12 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
     const input2FARef = useRef<MagicCodeInputHandle>();
     const timerRef = useRef<NodeJS.Timeout>();
 
-    const hasError = !!account && !isEmptyObject(account?.errors) && !needToClearError;
+    const hasError = (!!account && !isEmptyObject(account?.errors) && !needToClearError) || !!hybridApp?.oldDotSignInError;
     const isLoadingResendValidationForm = account?.loadingForm === CONST.FORMS.RESEND_VALIDATE_CODE_FORM;
     const shouldDisableResendValidateCode = isOffline ?? account?.isLoading;
     const isValidateCodeFormSubmitting = AccountUtils.isValidateCodeFormSubmitting(account);
+
+    console.log('[HybridApp] hybridApp', hybridApp);
 
     useEffect(() => {
         if (!(inputValidateCodeRef.current && hasError && (session?.autoAuthState === CONST.AUTO_AUTH_STATE.FAILED || account?.isLoading))) {
@@ -153,6 +162,9 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
      * Trigger the reset validate code flow and ensure the 2FA input field is reset to avoid it being permanently hidden
      */
     const resendValidateCode = () => {
+        setOldDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.NOT_STARTED);
+        setNewDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.NOT_STARTED);
+        setOldDotSignInError(null);
         User.resendValidateCode(credentials?.login ?? '');
         inputValidateCodeRef.current?.clear();
         // Give feedback to the user to let them know the email was sent so that they don't spam the button.
@@ -175,8 +187,13 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
      */
     const clearSignInData = useCallback(() => {
         clearLocalSignInData();
+        if (session?.authToken) {
+            signOut();
+            Onyx.set(ONYXKEYS.SESSION, null);
+        }
         SessionActions.clearSignInData();
-    }, [clearLocalSignInData]);
+        setShouldResetSigningInLogic(true);
+    }, [clearLocalSignInData, session?.authToken]);
 
     useImperativeHandle(forwardedRef, () => ({
         clearSignInData,
@@ -232,6 +249,20 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
      * Check that all the form fields are valid, then trigger the submit callback
      */
     const validateAndSubmitForm = useCallback(() => {
+        if (session?.authToken) {
+            setOldDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.WAITING_FOR_SIGN_OUT);
+            setNewDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.WAITING_FOR_SIGN_OUT);
+            signOut();
+            Onyx.merge(ONYXKEYS.SESSION, {
+                authToken: null,
+            }).then(() => {
+                setIsSigningIn(false);
+                setOldDotSignInError(null);
+                setOldDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.NOT_STARTED);
+                setNewDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.STARTED);
+            });
+        }
+
         if (account?.isLoading) {
             return;
         }
@@ -282,13 +313,14 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
 
         const recoveryCodeOr2faCode = isUsingRecoveryCode ? recoveryCode : twoFactorAuthCode;
 
+        setNewDotSignInState(CONST.HYBRID_APP_SIGN_IN_STATE.STARTED);
         const accountID = credentials?.accountID;
         if (accountID) {
             SessionActions.signInWithValidateCode(accountID, validateCode, recoveryCodeOr2faCode);
         } else {
             SessionActions.signIn(validateCode, recoveryCodeOr2faCode);
         }
-    }, [account, credentials, twoFactorAuthCode, validateCode, isUsingRecoveryCode, recoveryCode]);
+    }, [session?.authToken, account?.isLoading, account?.errors, account?.requiresTwoFactorAuth, isUsingRecoveryCode, recoveryCode, twoFactorAuthCode, credentials?.accountID, validateCode]);
 
     return (
         <SafariFormWrapper>
@@ -362,7 +394,7 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
                         key="validateCode"
                         testID="validateCode"
                     />
-                    {hasError && <FormHelpMessage message={ErrorUtils.getLatestErrorMessage(account)} />}
+                    {hasError && <FormHelpMessage message={hybridApp?.oldDotSignInError ?? ErrorUtils.getLatestErrorMessage(account)} />}
                     <View style={[styles.alignItemsStart]}>
                         {timeRemaining > 0 && !isOffline ? (
                             <Text style={[styles.mt2]}>
@@ -394,7 +426,7 @@ function BaseValidateCodeForm({autoComplete, isUsingRecoveryCode, setIsUsingReco
                     large
                     style={[styles.mv3]}
                     text={translate('common.signIn')}
-                    isLoading={isValidateCodeFormSubmitting}
+                    isLoading={shouldUseOldApp(tryNewDot) ? isValidateCodeFormSubmitting || hybridApp?.isSigningIn : isValidateCodeFormSubmitting}
                     onPress={validateAndSubmitForm}
                 />
                 <ChangeExpensifyLoginLink onPress={clearSignInData} />
