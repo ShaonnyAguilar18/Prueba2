@@ -256,7 +256,7 @@ function ReportDetailsPage({policies, report, route}: ReportDetailsPageProps) {
 
     const [moneyRequestReportActions] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${moneyRequestReport?.reportID}`);
     const isMoneyRequestExported = ReportUtils.isExported(moneyRequestReportActions);
-    const {isDelegateAccessRestricted, delegatorEmail} = useDelegateUserDetails();
+    const {isDelegateAccessRestricted} = useDelegateUserDetails();
     const [isNoDelegateAccessMenuVisible, setIsNoDelegateAccessMenuVisible] = useState(false);
 
     const unapproveExpenseReportOrShowModal = useCallback(() => {
@@ -942,7 +942,6 @@ function ReportDetailsPage({policies, report, route}: ReportDetailsPageProps) {
                 <DelegateNoAccessModal
                     isNoDelegateAccessMenuVisible={isNoDelegateAccessMenuVisible}
                     onClose={() => setIsNoDelegateAccessMenuVisible(false)}
-                    delegatorEmail={delegatorEmail ?? ''}
                 />
                 <ConfirmModal
                     title={translate('iou.unapproveReport')}

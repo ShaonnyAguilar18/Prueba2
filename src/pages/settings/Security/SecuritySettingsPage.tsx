@@ -5,6 +5,7 @@ import {Dimensions, View} from 'react-native';
 import type {GestureResponderEvent} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
 import ConfirmModal from '@components/ConfirmModal';
+import DelegateNoAccessModal from '@components/DelegateNoAccessModal';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import * as Expensicons from '@components/Icon/Expensicons';
 import {FallbackAvatar} from '@components/Icon/Expensicons';
@@ -63,6 +64,8 @@ function SecuritySettingsPage() {
         anchorPositionRight: 0,
     });
 
+    const [isNoDelegateAccessMenuVisible, setIsNoDelegateAccessMenuVisible] = useState(false);
+
     const setMenuPosition = useCallback(() => {
         if (!delegateButtonRef.current) {
             return;
@@ -92,7 +95,9 @@ function SecuritySettingsPage() {
         setShouldShowDelegatePopoverMenu(true);
         setSelectedDelegate(delegate);
     };
-
+    const showDelegateNoAccessMenu = () => {
+        setIsNoDelegateAccessMenuVisible(true);
+    };
     useLayoutEffect(() => {
         const popoverPositionListener = Dimensions.addEventListener('change', () => {
             debounce(setMenuPosition, CONST.TIMING.RESIZE_DEBOUNCE_TIME)();
@@ -111,12 +116,12 @@ function SecuritySettingsPage() {
             {
                 translationKey: 'twoFactorAuth.headerTitle',
                 icon: Expensicons.Shield,
-                action: waitForNavigate(() => Navigation.navigate(ROUTES.SETTINGS_2FA.getRoute())),
+                action: isActingAsDelegate ? showDelegateNoAccessMenu : waitForNavigate(() => Navigation.navigate(ROUTES.SETTINGS_2FA.getRoute())),
             },
             {
                 translationKey: 'closeAccountPage.closeAccount',
                 icon: Expensicons.ClosedSign,
-                action: waitForNavigate(() => Navigation.navigate(ROUTES.SETTINGS_CLOSE)),
+                action: isActingAsDelegate ? showDelegateNoAccessMenu : waitForNavigate(() => Navigation.navigate(ROUTES.SETTINGS_CLOSE)),
             },
         ];
 
@@ -129,7 +134,7 @@ function SecuritySettingsPage() {
             link: '',
             wrapperStyle: [styles.sectionMenuItemTopDescription],
         }));
-    }, [translate, waitForNavigate, styles]);
+    }, [translate, waitForNavigate, styles, isActingAsDelegate]);
 
     const delegateMenuItems: MenuItemProps[] = useMemo(
         () =>
@@ -292,8 +297,12 @@ function SecuritySettingsPage() {
                                         title={translate('delegate.changeAccessLevel')}
                                         icon={Expensicons.Pencil}
                                         onPress={() => {
-                                            Navigation.navigate(ROUTES.SETTINGS_UPDATE_DELEGATE_ROLE.getRoute(selectedDelegate?.email ?? '', selectedDelegate?.role ?? ''));
                                             setShouldShowDelegatePopoverMenu(false);
+                                            if (isActingAsDelegate) {
+                                                setIsNoDelegateAccessMenuVisible(true);
+                                                return;
+                                            }
+                                            Navigation.navigate(ROUTES.SETTINGS_UPDATE_DELEGATE_ROLE.getRoute(selectedDelegate?.email ?? '', selectedDelegate?.role ?? ''));
                                             setSelectedDelegate(undefined);
                                         }}
                                         wrapperStyle={[styles.pv3, styles.ph5, !shouldUseNarrowLayout ? styles.sidebarPopover : {}]}
@@ -304,6 +313,10 @@ function SecuritySettingsPage() {
                                         onPress={() =>
                                             Modal.close(() => {
                                                 setShouldShowDelegatePopoverMenu(false);
+                                                if (isActingAsDelegate) {
+                                                    setIsNoDelegateAccessMenuVisible(true);
+                                                    return;
+                                                }
                                                 setShouldShowRemoveDelegateModal(true);
                                             })
                                         }
@@ -331,6 +344,10 @@ function SecuritySettingsPage() {
                             />
                         </View>
                     </ScrollView>
+                    <DelegateNoAccessModal
+                        isNoDelegateAccessMenuVisible={isNoDelegateAccessMenuVisible}
+                        onClose={() => setIsNoDelegateAccessMenuVisible(false)}
+                    />
                 </>
             )}
         </ScreenWrapper>

@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
+import {useOnyx} from 'react-native-onyx';
 import AddressForm from '@components/AddressForm';
+import DelegateNoAccessModal from '@components/DelegateNoAccessModal';
 import FullscreenLoadingIndicator from '@components/FullscreenLoadingIndicator';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
@@ -36,6 +38,20 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
     const [state, setState] = useState(address?.state);
     const [city, setCity] = useState(address?.city);
     const [zipcode, setZipcode] = useState(address?.zip);
+
+    const [isActingAsDelegate] = useOnyx(ONYXKEYS.ACCOUNT, {selector: (account) => !!account?.delegatedAccess?.delegate});
+    const [isNoDelegateAccessMenuVisible, setIsNoDelegateAccessMenuVisible] = useState(false);
+
+    // For delegates, modifying legal address is a restricted action.
+    // So, on pressing submit, skip validation and show delegateNoAccessModal
+    const skipValidation = isActingAsDelegate;
+    const handleSubmit = (values: FormOnyxValues<typeof ONYXKEYS.FORMS.HOME_ADDRESS_FORM>) => {
+        if (isActingAsDelegate) {
+            setIsNoDelegateAccessMenuVisible(true);
+            return;
+        }
+        updateAddress(values);
+    };
 
     useEffect(() => {
         if (!address) {
@@ -91,7 +107,7 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
             ) : (
                 <AddressForm
                     formID={ONYXKEYS.FORMS.HOME_ADDRESS_FORM}
-                    onSubmit={updateAddress}
+                    onSubmit={handleSubmit}
                     submitButtonText={translate('common.save')}
                     city={city}
                     country={currentCountry}
@@ -100,8 +116,13 @@ function AddressPage({title, address, updateAddress, isLoadingApp = true, backTo
                     street1={street1}
                     street2={street2}
                     zip={zipcode}
+                    skipValidation={skipValidation}
                 />
             )}
+            <DelegateNoAccessModal
+                isNoDelegateAccessMenuVisible={isNoDelegateAccessMenuVisible}
+                onClose={() => setIsNoDelegateAccessMenuVisible(false)}
+            />
         </ScreenWrapper>
     );
 }

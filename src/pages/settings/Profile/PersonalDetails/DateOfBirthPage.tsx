@@ -1,8 +1,9 @@
 import {subYears} from 'date-fns';
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
-import {withOnyx} from 'react-native-onyx';
+import {useOnyx, withOnyx} from 'react-native-onyx';
 import DatePicker from '@components/DatePicker';
+import DelegateNoAccessModal from '@components/DelegateNoAccessModal';
 import FormProvider from '@components/Form/FormProvider';
 import InputWrapper from '@components/Form/InputWrapper';
 import type {FormOnyxValues} from '@components/Form/types';
@@ -17,6 +18,7 @@ import * as PersonalDetails from '@userActions/PersonalDetails';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import INPUT_IDS from '@src/types/form/DateOfBirthForm';
+import type {DateOfBirthForm} from '@src/types/form/DateOfBirthForm';
 import type {PrivatePersonalDetails} from '@src/types/onyx';
 
 type DateOfBirthPageOnyxProps = {
@@ -30,6 +32,9 @@ type DateOfBirthPageProps = DateOfBirthPageOnyxProps;
 function DateOfBirthPage({privatePersonalDetails, isLoadingApp = true}: DateOfBirthPageProps) {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
+    const [isActingAsDelegate] = useOnyx(ONYXKEYS.ACCOUNT, {selector: (account) => !!account?.delegatedAccess?.delegate});
+
+    const [isNoDelegateAccessMenuVisible, setIsNoDelegateAccessMenuVisible] = useState(false);
 
     /**
      * @returns An object containing the errors for each inputID
@@ -49,6 +54,17 @@ function DateOfBirthPage({privatePersonalDetails, isLoadingApp = true}: DateOfBi
         return errors;
     }, []);
 
+    // For delegates, modifying legal DOB is a restricted action.
+    // So, on pressing submit, skip validation and show delegateNoAccessModal
+    const skipValidation = isActingAsDelegate;
+    const handleSubmit = (DOB: DateOfBirthForm) => {
+        if (isActingAsDelegate) {
+            setIsNoDelegateAccessMenuVisible(true);
+            return;
+        }
+        PersonalDetails.updateDateOfBirth(DOB);
+    };
+
     return (
         <ScreenWrapper
             includeSafeAreaPaddingBottom={false}
@@ -64,8 +80,8 @@ function DateOfBirthPage({privatePersonalDetails, isLoadingApp = true}: DateOfBi
                 <FormProvider
                     style={[styles.flexGrow1, styles.ph5]}
                     formID={ONYXKEYS.FORMS.DATE_OF_BIRTH_FORM}
-                    validate={validate}
-                    onSubmit={PersonalDetails.updateDateOfBirth}
+                    validate={skipValidation ? undefined : validate}
+                    onSubmit={handleSubmit}
                     submitButtonText={translate('common.save')}
                     enabledWhenOffline
                 >
@@ -79,6 +95,10 @@ function DateOfBirthPage({privatePersonalDetails, isLoadingApp = true}: DateOfBi
                     />
                 </FormProvider>
             )}
+            <DelegateNoAccessModal
+                isNoDelegateAccessMenuVisible={isNoDelegateAccessMenuVisible}
+                onClose={() => setIsNoDelegateAccessMenuVisible(false)}
+            />
         </ScreenWrapper>
     );
 }
