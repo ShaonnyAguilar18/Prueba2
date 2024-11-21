@@ -38,6 +38,7 @@ import type {
     ChangeTypeParams,
     CharacterLengthLimitParams,
     CharacterLimitParams,
+    ChatWithAMParams,
     CompanyCardBankName,
     CompanyCardFeedNameParams,
     CompanyNameParams,
@@ -466,6 +467,8 @@ const translations = {
         sent: 'Enviado',
         links: 'Enlaces',
         days: 'días',
+        chatWithAM: ({AMDisplayName}: ChatWithAMParams) => `¿Necesitas algo específico? Habla con tu gerente de cuenta, ${AMDisplayName}.`,
+        chatNow: 'Chatear ahora',
     },
     connectionComplete: {
         title: 'Conexión completa',
