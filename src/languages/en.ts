@@ -2426,6 +2426,7 @@ const translations = {
         hotel: 'Hotel',
         car: 'Car',
         viewTrip: 'View trip',
+        tripSupport: 'Trip support',
         viewTripDetails: 'View trip details',
         trip: 'Trip',
         trips: 'Trips',
