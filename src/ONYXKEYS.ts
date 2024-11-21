@@ -36,6 +36,9 @@ const ONYXKEYS = {
     PERSISTED_REQUESTS: 'networkRequestQueue',
     PERSISTED_ONGOING_REQUESTS: 'networkOngoingRequestQueue',
 
+    /** The re-authentication request to be retried as needed */
+    REAUTHENTICATION_REQUEST: 'reauthenticationRequest',
+
     /** Stores current date */
     CURRENT_DATE: 'currentDate',
 
@@ -891,6 +894,7 @@ type OnyxValuesMapping = {
     [ONYXKEYS.IS_SIDEBAR_LOADED]: boolean;
     [ONYXKEYS.PERSISTED_REQUESTS]: OnyxTypes.Request[];
     [ONYXKEYS.PERSISTED_ONGOING_REQUESTS]: OnyxTypes.Request;
+    [ONYXKEYS.REAUTHENTICATION_REQUEST]: OnyxTypes.Request;
     [ONYXKEYS.CURRENT_DATE]: string;
     [ONYXKEYS.CREDENTIALS]: OnyxTypes.Credentials;
     [ONYXKEYS.STASHED_CREDENTIALS]: OnyxTypes.Credentials;
