@@ -8315,6 +8315,7 @@ export {
     completePaymentOnboarding,
     payInvoice,
     payMoneyRequest,
+    prepareToCleanUpMoneyRequest,
     putOnHold,
     replaceReceipt,
     requestMoney,
