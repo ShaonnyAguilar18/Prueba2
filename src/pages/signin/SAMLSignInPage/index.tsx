@@ -1,13 +1,29 @@
 import React, {useEffect} from 'react';
-import {withOnyx} from 'react-native-onyx';
+import {useOnyx} from 'react-native-onyx';
 import SAMLLoadingIndicator from '@components/SAMLLoadingIndicator';
+import {getApiRoot} from '@libs/ApiUtils';
 import CONFIG from '@src/CONFIG';
+import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
-import type {SAMLSignInPageOnyxProps, SAMLSignInPageProps} from './types';
 
-function SAMLSignInPage({credentials}: SAMLSignInPageProps) {
+function SAMLSignInPage() {
+    const [credentials] = useOnyx(ONYXKEYS.CREDENTIALS);
     useEffect(() => {
-        window.location.replace(`${CONFIG.EXPENSIFY.SAML_URL}?email=${credentials?.login}&referer=${CONFIG.EXPENSIFY.EXPENSIFY_CASH_REFERER}`);
+        const body = new FormData();
+        body.append('email', credentials?.login ?? '');
+        body.append('referer', CONFIG.EXPENSIFY.EXPENSIFY_CASH_REFERER);
+
+        fetch(`${getApiRoot()}authentication/saml/login`, {
+            method: CONST.NETWORK.METHOD.POST,
+            body,
+            credentials: 'omit',
+        })
+            .then((response) => response.json() as Promise<Response>)
+            .then((json) => {
+                if (json.url) {
+                    window.location.replace(json.url);
+                }
+            });
     }, [credentials?.login]);
 
     return <SAMLLoadingIndicator />;
@@ -15,7 +31,4 @@ function SAMLSignInPage({credentials}: SAMLSignInPageProps) {
 
 SAMLSignInPage.displayName = 'SAMLSignInPage';
 
-export default withOnyx<SAMLSignInPageProps, SAMLSignInPageOnyxProps>({
-    account: {key: ONYXKEYS.ACCOUNT},
-    credentials: {key: ONYXKEYS.CREDENTIALS},
-})(SAMLSignInPage);
+export default SAMLSignInPage;
