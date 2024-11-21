@@ -2526,6 +2526,7 @@ const translations = {
                         return 'Member';
                 }
             },
+            submitExpense: 'Submit expenses using your workspace chat below:',
         },
         perDiem: {
             subtitle: 'Set per diem rates to control daily employee spend. ',
