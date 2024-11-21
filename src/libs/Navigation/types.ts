@@ -1333,7 +1333,9 @@ type TransactionDuplicateNavigatorParamList = {
 };
 
 type LeftModalNavigatorParamList = {
-    [SCREENS.LEFT_MODAL.WORKSPACE_SWITCHER]: undefined;
+    [SCREENS.LEFT_MODAL.WORKSPACE_SWITCHER]: {
+        isHomeResetRequired?: string;
+    };
 };
 
 type RightModalNavigatorParamList = {
