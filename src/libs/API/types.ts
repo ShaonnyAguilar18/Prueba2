@@ -437,6 +437,7 @@ const WRITE_COMMANDS = {
     SELF_TOUR_VIEWED: 'SelfTourViewed',
     UPDATE_INVOICE_COMPANY_NAME: 'UpdateInvoiceCompanyName',
     UPDATE_INVOICE_COMPANY_WEBSITE: 'UpdateInvoiceCompanyWebsite',
+    GET_CORPAY_BANK_ACCOUNT_FIELDS: 'GetCorpayBankAccountFields',
 } as const;
 
 type WriteCommand = ValueOf<typeof WRITE_COMMANDS>;
@@ -759,6 +760,7 @@ type WriteCommandParameters = {
     [WRITE_COMMANDS.UPDATE_SUBSCRIPTION_ADD_NEW_USERS_AUTOMATICALLY]: Parameters.UpdateSubscriptionAddNewUsersAutomaticallyParams;
     [WRITE_COMMANDS.UPDATE_SUBSCRIPTION_SIZE]: Parameters.UpdateSubscriptionSizeParams;
     [WRITE_COMMANDS.REQUEST_TAX_EXEMPTION]: null;
+    [WRITE_COMMANDS.GET_CORPAY_BANK_ACCOUNT_FIELDS]: Parameters.GetCorpayBankAccountFieldsParams;
 
     [WRITE_COMMANDS.DELETE_MONEY_REQUEST_ON_SEARCH]: Parameters.DeleteMoneyRequestOnSearchParams;
     [WRITE_COMMANDS.HOLD_MONEY_REQUEST_ON_SEARCH]: Parameters.HoldMoneyRequestOnSearchParams;
@@ -1025,6 +1027,7 @@ const SIDE_EFFECT_REQUEST_COMMANDS = {
     DISCONNECT_AS_DELEGATE: 'DisconnectAsDelegate',
     COMPLETE_HYBRID_APP_ONBOARDING: 'CompleteHybridAppOnboarding',
     CONNECT_POLICY_TO_QUICKBOOKS_DESKTOP: 'ConnectPolicyToQuickbooksDesktop',
+    BANK_ACCOUNT_CREATE_CORPAY: 'BankAccount_CreateCorpay',
 } as const;
 
 type SideEffectRequestCommand = ValueOf<typeof SIDE_EFFECT_REQUEST_COMMANDS>;
@@ -1045,6 +1048,7 @@ type SideEffectRequestCommandParameters = {
     [SIDE_EFFECT_REQUEST_COMMANDS.DISCONNECT_AS_DELEGATE]: EmptyObject;
     [SIDE_EFFECT_REQUEST_COMMANDS.COMPLETE_HYBRID_APP_ONBOARDING]: EmptyObject;
     [SIDE_EFFECT_REQUEST_COMMANDS.CONNECT_POLICY_TO_QUICKBOOKS_DESKTOP]: Parameters.ConnectPolicyToQuickBooksDesktopParams;
+    [SIDE_EFFECT_REQUEST_COMMANDS.BANK_ACCOUNT_CREATE_CORPAY]: Parameters.BankAccountCreateCorpayParams;
 };
 
 type ApiRequestCommandParameters = WriteCommandParameters & ReadCommandParameters & SideEffectRequestCommandParameters;
