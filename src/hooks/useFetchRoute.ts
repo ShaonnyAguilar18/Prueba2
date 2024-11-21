@@ -1,5 +1,5 @@
 import isEqual from 'lodash/isEqual';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import type {OnyxEntry} from 'react-native-onyx';
 import * as TransactionUtils from '@libs/TransactionUtils';
 import * as TransactionAction from '@userActions/Transaction';
@@ -18,6 +18,7 @@ export default function useFetchRoute(
     transactionState: TransactionState = CONST.TRANSACTION.STATE.CURRENT,
 ) {
     const {isOffline} = useNetwork();
+    const [isInitialMount, setIsInitialMount] = useState(true);
     const hasRouteError = !!transaction?.errorFields?.route;
     const hasRoute = TransactionUtils.hasRoute(transaction);
     const isRouteAbsentWithoutErrors = !hasRoute && !hasRouteError;
@@ -26,7 +27,11 @@ export default function useFetchRoute(
     const previousValidatedWaypoints = usePrevious(validatedWaypoints);
     const haveValidatedWaypointsChanged = !isEqual(previousValidatedWaypoints, validatedWaypoints);
     const isDistanceRequest = TransactionUtils.isDistanceRequest(transaction);
-    const shouldFetchRoute = isDistanceRequest && (isRouteAbsentWithoutErrors || haveValidatedWaypointsChanged) && !isLoadingRoute && Object.keys(validatedWaypoints).length > 1;
+    const shouldFetchRoute =
+        isDistanceRequest &&
+        (isRouteAbsentWithoutErrors || haveValidatedWaypointsChanged || (isInitialMount && hasRouteError)) &&
+        !isLoadingRoute &&
+        Object.keys(validatedWaypoints).length > 1;
 
     useEffect(() => {
         if (isOffline || !shouldFetchRoute || !transaction?.transactionID) {
@@ -34,6 +39,7 @@ export default function useFetchRoute(
         }
 
         TransactionAction.getRoute(transaction.transactionID, validatedWaypoints, transactionState);
+        setIsInitialMount(false);
     }, [shouldFetchRoute, transaction?.transactionID, validatedWaypoints, isOffline, action, transactionState]);
 
     return {shouldFetchRoute, validatedWaypoints};
