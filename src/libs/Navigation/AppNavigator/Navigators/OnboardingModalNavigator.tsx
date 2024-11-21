@@ -14,7 +14,9 @@ import OnboardingRefManager from '@libs/OnboardingRefManager';
 import OnboardingAccounting from '@pages/OnboardingAccounting';
 import OnboardingEmployees from '@pages/OnboardingEmployees';
 import OnboardingPersonalDetails from '@pages/OnboardingPersonalDetails';
+import OnboardingPrivateDomain from '@pages/OnboardingPrivateDomain';
 import OnboardingPurpose from '@pages/OnboardingPurpose';
+import OnboardingWorkspaces from '@pages/OnboardingWorkspaces';
 import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import SCREENS from '@src/SCREENS';
@@ -65,6 +67,14 @@ function OnboardingModalNavigator() {
                             <Stack.Screen
                                 name={SCREENS.ONBOARDING.PERSONAL_DETAILS}
                                 component={OnboardingPersonalDetails}
+                            />
+                            <Stack.Screen
+                                name={SCREENS.ONBOARDING.PRIVATE_DOMAIN}
+                                component={OnboardingPrivateDomain}
+                            />
+                            <Stack.Screen
+                                name={SCREENS.ONBOARDING.WORKSPACES}
+                                component={OnboardingWorkspaces}
                             />
                             <Stack.Screen
                                 name={SCREENS.ONBOARDING.EMPLOYEES}
