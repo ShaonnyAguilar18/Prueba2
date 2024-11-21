@@ -189,6 +189,7 @@ import type {
     WelcomeNoteParams,
     WelcomeToRoomParams,
     WeSentYouMagicSignInLinkParams,
+    WorkspaceLockedPlanTypeParams,
     WorkspaceOwnerWillNeedToAddOrUpdatePaymentCardParams,
     YourPlanPriceParams,
     ZipCodeExampleFormatParams,
@@ -2550,6 +2551,7 @@ const translations = {
                         return 'Miembro';
                 }
             },
+            planType: 'Tipo de plan',
         },
         perDiem: {
             subtitle: 'Establece las tasas per diem para controlar los gastos diarios de los empleados. ',
@@ -4233,6 +4235,23 @@ const translations = {
             confirmText: 'Sí, exportar de nuevo',
             cancelText: 'Cancelar',
         },
+        planTypePage: {
+            planTypes: {
+                team: {
+                    label: 'Collect',
+                    description: 'Para equipos que buscan automatizar sus procesos.',
+                },
+                corporate: {
+                    label: 'Recolectar',
+                    description: 'Para organizaciones con requisitos avanzados.',
+                },
+            },
+            description: 'Elige el plan adecuado para ti. Para ver una lista detallada de funciones y precios, consulta nuestra',
+            subscriptionLink: 'página de ayuda sobre tipos de planes y precios',
+            lockedPlanDescription: ({subscriptionUsersCount, annualSubscriptionEndDate}: WorkspaceLockedPlanTypeParams) =>
+                `Tienes un compromiso anual de ${subscriptionUsersCount} miembros activos en el plan Control hasta el ${annualSubscriptionEndDate}. Puedes cambiar a una suscripción de pago por uso y desmejorar al plan Recopilar a partir del ${annualSubscriptionEndDate} desactivando la renovación automática en`,
+            subscriptions: 'Suscripciones',
+        },
         upgrade: {
             reportFields: {
                 title: 'Los campos',
@@ -4306,6 +4325,19 @@ const translations = {
                 viewSubscription: 'Ver su suscripción',
                 moreDetails: 'para obtener más información.',
                 gotIt: 'Entendido, gracias.',
+            },
+            commonFeatures: {
+                title: 'Actualiza tu espacio de trabajo al plan Controlar',
+                note: 'Obtén acceso a todas nuestras funciones más avanzadas, incluyendo:',
+                benefits: {
+                    note: 'El plan Controlar comienza en $9 por miembro activo al mes.',
+                    learnMore: 'Obtén más información',
+                    pricing: 'sobre nuestros planes y precios.',
+                    benefit1: 'Conexiones contables avanzadas (NetSuite, Sage Intacct y más)',
+                    benefit2: 'Reglas de gastos',
+                    benefit3: 'Flujos de aprobación múltiples',
+                    benefit4: 'Controles de seguridad mejorados',
+                },
             },
         },
         restrictedAction: {

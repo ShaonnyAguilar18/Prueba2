@@ -19,7 +19,7 @@ import ROUTES from '@src/ROUTES';
 type Props = {
     buttonDisabled?: boolean;
     loading?: boolean;
-    feature: ValueOf<typeof CONST.UPGRADE_FEATURE_INTRO_MAPPING>;
+    feature?: ValueOf<typeof CONST.UPGRADE_FEATURE_INTRO_MAPPING>;
     onUpgrade: () => void;
 };
 
@@ -27,6 +27,16 @@ function UpgradeIntro({feature, onUpgrade, buttonDisabled, loading}: Props) {
     const styles = useThemeStyles();
     const {isExtraSmallScreenWidth} = useResponsiveLayout();
     const {translate} = useLocalize();
+
+    if (!feature) {
+        return (
+            <CommonCorporateFeatures
+                onUpgrade={onUpgrade}
+                buttonDisabled={buttonDisabled}
+                loading={loading}
+            />
+        );
+    }
     const isIllustration = feature.icon in Illustrations;
     const iconSrc = isIllustration ? Illustrations[feature.icon as keyof typeof Illustrations] : Expensicon[feature.icon as keyof typeof Expensicon];
     const iconAdditionalStyles = feature.id === CONST.UPGRADE_FEATURE_INTRO_MAPPING.approvals.id ? styles.br0 : undefined;
@@ -84,6 +94,62 @@ function UpgradeIntro({feature, onUpgrade, buttonDisabled, loading}: Props) {
                     {translate('workspace.upgrade.note.aboutOurPlans')}
                 </Text>
             </View>
+        </View>
+    );
+}
+
+function CommonCorporateFeatures({buttonDisabled, loading, onUpgrade}: {buttonDisabled?: boolean; loading?: boolean; onUpgrade: () => void}) {
+    const styles = useThemeStyles();
+    const {translate} = useLocalize();
+    const {isExtraSmallScreenWidth} = useResponsiveLayout();
+
+    const benefits = [
+        translate('workspace.upgrade.commonFeatures.benefits.benefit1'),
+        translate('workspace.upgrade.commonFeatures.benefits.benefit2'),
+        translate('workspace.upgrade.commonFeatures.benefits.benefit3'),
+        translate('workspace.upgrade.commonFeatures.benefits.benefit4'),
+    ];
+
+    return (
+        <View style={[styles.m5, styles.workspaceUpgradeIntroBox({isExtraSmallScreenWidth})]}>
+            <View style={[styles.mb3]}>
+                <Icon
+                    src={Illustrations.ShieldYellow}
+                    width={48}
+                    height={48}
+                />
+            </View>
+            <View style={styles.mb5}>
+                <Text style={[styles.textHeadlineH1, styles.mb4]}>{translate('workspace.upgrade.commonFeatures.title')}</Text>
+                <Text style={[styles.textNormal, styles.textSupporting, styles.mb4]}>{translate('workspace.upgrade.commonFeatures.note')}</Text>
+                {benefits.map((benefit) => (
+                    <View
+                        key={benefit}
+                        style={[styles.pl2, styles.flexRow]}
+                    >
+                        <Text style={[styles.textNormal, styles.textSupporting]}>• </Text>
+                        <Text style={[styles.textNormal, styles.textSupporting]}>{benefit}</Text>
+                    </View>
+                ))}
+                <Text style={[styles.textNormal, styles.textSupporting, styles.mt4]}>
+                    {translate('workspace.upgrade.commonFeatures.benefits.note')}{' '}
+                    <TextLink
+                        style={[styles.link]}
+                        onPress={() => Navigation.navigate(ROUTES.SETTINGS_SUBSCRIPTION)}
+                    >
+                        {translate('workspace.upgrade.commonFeatures.benefits.learnMore')}
+                    </TextLink>{' '}
+                    {translate('workspace.upgrade.commonFeatures.benefits.pricing')}
+                </Text>
+            </View>
+            <Button
+                isLoading={loading}
+                text={translate('common.upgrade')}
+                success
+                onPress={onUpgrade}
+                isDisabled={buttonDisabled}
+                large
+            />
         </View>
     );
 }
