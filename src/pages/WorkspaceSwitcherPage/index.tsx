@@ -1,3 +1,4 @@
+import {useIsFocused} from '@react-navigation/native';
 import React, {useCallback, useMemo} from 'react';
 import {View} from 'react-native';
 import {useOnyx} from 'react-native-onyx';
@@ -41,6 +42,7 @@ function WorkspaceSwitcherPage() {
     const [searchTerm, debouncedSearchTerm, setSearchTerm] = useDebouncedState('');
     const {translate} = useLocalize();
     const {activeWorkspaceID, setActiveWorkspaceID} = useActiveWorkspace();
+    const isFocused = useIsFocused();
 
     const [reports] = useOnyx(ONYXKEYS.COLLECTION.REPORT);
     const [reportActions] = useOnyx(ONYXKEYS.COLLECTION.REPORT_ACTIONS);
@@ -83,7 +85,7 @@ function WorkspaceSwitcherPage() {
 
     const selectPolicy = useCallback(
         (option?: WorkspaceListItem) => {
-            if (!option) {
+            if (!option || !isFocused) {
                 return;
             }
 
@@ -95,7 +97,7 @@ function WorkspaceSwitcherPage() {
                 Navigation.navigateWithSwitchPolicyID({policyID});
             }
         },
-        [activeWorkspaceID, setActiveWorkspaceID],
+        [activeWorkspaceID, setActiveWorkspaceID, isFocused],
     );
 
     const usersWorkspaces = useMemo<WorkspaceListItem[]>(() => {
