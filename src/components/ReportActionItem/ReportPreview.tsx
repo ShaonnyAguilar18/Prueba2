@@ -347,15 +347,16 @@ function ReportPreview({
 
     const bankAccountRoute = ReportUtils.getBankAccountRoute(chatReport);
     const getCanIOUBePaid = useCallback(
-        (onlyShowPayElsewhere = false, shouldCheckApprovedState = true) => IOU.canIOUBePaid(iouReport, chatReport, policy, allTransactions, onlyShowPayElsewhere, shouldCheckApprovedState),
-        [iouReport, chatReport, policy, allTransactions],
+        (onlyShowPayElsewhere = false, shouldCheckApprovedState = true) =>
+            IOU.canIOUBePaid(iouReport, chatReport, policy, transactionViolations, allTransactions, onlyShowPayElsewhere, shouldCheckApprovedState),
+        [iouReport, chatReport, policy, allTransactions, transactionViolations],
     );
 
     const canIOUBePaid = useMemo(() => getCanIOUBePaid(), [getCanIOUBePaid]);
     const canIOUBePaidAndApproved = useMemo(() => getCanIOUBePaid(false, false), [getCanIOUBePaid]);
     const onlyShowPayElsewhere = useMemo(() => !canIOUBePaid && getCanIOUBePaid(true), [canIOUBePaid, getCanIOUBePaid]);
     const shouldShowPayButton = isPaidAnimationRunning || canIOUBePaid || onlyShowPayElsewhere;
-    const shouldShowApproveButton = useMemo(() => IOU.canApproveIOU(iouReport, policy), [iouReport, policy]) || isApprovedAnimationRunning;
+    const shouldShowApproveButton = useMemo(() => IOU.canApproveIOU(iouReport, policy, transactionViolations), [iouReport, policy, transactionViolations]) || isApprovedAnimationRunning;
 
     const shouldDisableApproveButton = shouldShowApproveButton && !ReportUtils.isAllowedToApproveExpenseReport(iouReport);
 
