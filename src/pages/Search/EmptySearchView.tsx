@@ -32,6 +32,7 @@ import type {SearchDataTypes} from '@src/types/onyx/SearchResults';
 
 type EmptySearchViewProps = {
     type: SearchDataTypes;
+    hasNoFilterApplied?: boolean;
 };
 
 const tripsFeatures: FeatureListItem[] = [
@@ -45,7 +46,7 @@ const tripsFeatures: FeatureListItem[] = [
     },
 ];
 
-function EmptySearchView({type}: EmptySearchViewProps) {
+function EmptySearchView({type, hasNoFilterApplied = false}: EmptySearchViewProps) {
     const theme = useTheme();
     const StyleUtils = useStyleUtils();
     const {translate} = useLocalize();
@@ -126,30 +127,59 @@ function EmptySearchView({type}: EmptySearchViewProps) {
                     ],
                 };
             case CONST.SEARCH.DATA_TYPES.EXPENSE:
-                return {
-                    headerMedia: LottieAnimations.GenericEmptyState,
-                    headerStyles: [StyleUtils.getBackgroundColorStyle(theme.emptyFolderBG)],
-                    title: translate('search.searchResults.emptyExpenseResults.title'),
-                    subtitle: translate('search.searchResults.emptyExpenseResults.subtitle'),
-                    buttons: [
-                        {buttonText: translate('emptySearchView.takeATour'), buttonAction: () => Link.openExternalLink(navatticURL)},
-                        {
-                            buttonText: translate('iou.createExpense'),
-                            buttonAction: () =>
-                                interceptAnonymousUser(() => {
-                                    if (shouldRedirectToExpensifyClassic) {
-                                        setModalVisible(true);
-                                        return;
-                                    }
-                                    IOU.startMoneyRequest(CONST.IOU.TYPE.CREATE, ReportUtils.generateReportID());
-                                }),
-                            success: true,
-                        },
-                    ],
-                    headerContentStyles: styles.emptyStateFolderWebStyles,
-                };
-            case CONST.SEARCH.DATA_TYPES.CHAT:
+                if (hasNoFilterApplied) {
+                    return {
+                        headerMedia: LottieAnimations.GenericEmptyState,
+                        headerStyles: [StyleUtils.getBackgroundColorStyle(theme.emptyFolderBG)],
+                        title: translate('search.searchResults.emptyExpenseResults.title'),
+                        subtitle: translate('search.searchResults.emptyExpenseResults.subtitle'),
+                        buttons: [
+                            {buttonText: translate('emptySearchView.takeATour'), buttonAction: () => Link.openExternalLink(navatticURL)},
+                            {
+                                buttonText: translate('iou.createExpense'),
+                                buttonAction: () =>
+                                    interceptAnonymousUser(() => {
+                                        if (shouldRedirectToExpensifyClassic) {
+                                            setModalVisible(true);
+                                            return;
+                                        }
+                                        IOU.startMoneyRequest(CONST.IOU.TYPE.CREATE, ReportUtils.generateReportID());
+                                    }),
+                                success: true,
+                            },
+                        ],
+                        headerContentStyles: styles.emptyStateFolderWebStyles,
+                    };
+                }
+            // We want to display the default nothing to show message if there is any filter applied.
+            // eslint-disable-next-line no-fallthrough
             case CONST.SEARCH.DATA_TYPES.INVOICE:
+                if (hasNoFilterApplied) {
+                    return {
+                        headerMedia: LottieAnimations.GenericEmptyState,
+                        headerStyles: [StyleUtils.getBackgroundColorStyle(theme.emptyFolderBG)],
+                        title: translate('search.searchResults.emptyInvoiceResults.title'),
+                        subtitle: translate('search.searchResults.emptyInvoiceResults.subtitle'),
+                        buttons: [
+                            {buttonText: translate('emptySearchView.takeATour'), buttonAction: () => Link.openExternalLink(navatticURL)},
+                            {
+                                buttonText: translate('workspace.invoices.sendInvoice'),
+                                buttonAction: () =>
+                                    interceptAnonymousUser(() => {
+                                        if (shouldRedirectToExpensifyClassic) {
+                                            setModalVisible(true);
+                                            return;
+                                        }
+                                        IOU.startMoneyRequest(CONST.IOU.TYPE.INVOICE, ReportUtils.generateReportID());
+                                    }),
+                                success: true,
+                            },
+                        ],
+                        headerContentStyles: styles.emptyStateFolderWebStyles,
+                    };
+                }
+            // eslint-disable-next-line no-fallthrough
+            case CONST.SEARCH.DATA_TYPES.CHAT:
             default:
                 return {
                     headerMedia: LottieAnimations.GenericEmptyState,
@@ -171,6 +201,7 @@ function EmptySearchView({type}: EmptySearchViewProps) {
         ctaErrorMessage,
         navatticURL,
         shouldRedirectToExpensifyClassic,
+        hasNoFilterApplied,
     ]);
 
     return (
