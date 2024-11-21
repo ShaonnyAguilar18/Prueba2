@@ -106,6 +106,8 @@ function MoneyRequestPreviewContent({
         currency: requestCurrency,
         comment: requestComment,
         merchant,
+        tag,
+        category,
     } = useMemo<Partial<TransactionDetails>>(() => ReportUtils.getTransactionDetails(transaction) ?? {}, [transaction]);
 
     const description = truncate(StringUtils.lineBreaksToSpaces(requestComment), {length: CONST.REQUEST_PREVIEW.MAX_LENGTH});
@@ -425,6 +427,41 @@ function MoneyRequestPreviewContent({
                                                     fill={theme.icon}
                                                 />
                                                 <Text style={[styles.textMicroSupporting, styles.ml1, styles.amountSplitPadding]}>{pendingMessageProps.messageDescription}</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    {(!!tag || !!category) && <View style={[styles.threadDividerLine, styles.ml0, styles.mr0, styles.mt1]} />}
+                                    <View style={[styles.flexRow, styles.pt1, styles.alignItemsCenter]}>
+                                        {!!category && (
+                                            <View style={[styles.flexRow, styles.alignItemsCenter, styles.gap1, tag && styles.mw50, tag && styles.pr1, styles.flexShrink1]}>
+                                                <Icon
+                                                    src={Expensicons.Folder}
+                                                    height={variables.iconSizeExtraSmall}
+                                                    width={variables.iconSizeExtraSmall}
+                                                    fill={theme.icon}
+                                                />
+                                                <Text
+                                                    numberOfLines={1}
+                                                    style={[styles.textLabelSupporting, styles.pre, styles.flexShrink1]}
+                                                >
+                                                    {category}
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {!!tag && (
+                                            <View style={[styles.flex1, styles.flexRow, styles.alignItemsCenter, styles.gap1, category && styles.pl1]}>
+                                                <Icon
+                                                    src={Expensicons.Tag}
+                                                    height={variables.iconSizeExtraSmall}
+                                                    width={variables.iconSizeExtraSmall}
+                                                    fill={theme.icon}
+                                                />
+                                                <Text
+                                                    numberOfLines={1}
+                                                    style={[styles.textLabelSupporting, styles.pre, styles.flexShrink1]}
+                                                >
+                                                    {tag}
+                                                </Text>
                                             </View>
                                         )}
                                     </View>
