@@ -1,4 +1,4 @@
-import React, {forwardRef, useCallback} from 'react';
+import React, {forwardRef, useCallback, useEffect, useState} from 'react';
 import type {ForwardedRef} from 'react';
 import {useOnyx} from 'react-native-onyx';
 import type {ValueOf} from 'type-fest';
@@ -156,6 +156,8 @@ function SearchRouterList(
     const [cardList = {}] = useOnyx(ONYXKEYS.CARD_LIST);
     const sections: Array<SectionListDataType<OptionData | SearchQueryItem>> = [];
 
+    const [isInitialRender, setIsInitialRender] = useState(true);
+
     if (textInputValue) {
         sections.push({
             data: [
@@ -298,6 +300,13 @@ function SearchRouterList(
         [setTextInputValue, textInputValue, onAutocompleteSuggestionClick],
     );
 
+    useEffect(() => {
+        if (textInputValue) {
+            return;
+        }
+        setIsInitialRender(true);
+    }, [textInputValue]);
+
     return (
         <SelectionList<OptionData | SearchQueryItem>
             sections={sections}
@@ -307,12 +316,16 @@ function SearchRouterList(
             sectionListStyle={[shouldUseNarrowLayout ? styles.ph5 : styles.ph2, styles.pb2]}
             listItemWrapperStyle={[styles.pr0, styles.pl0]}
             getItemHeight={getItemHeight}
-            onLayout={setPerformanceTimersEnd}
+            onLayout={() => {
+                setPerformanceTimersEnd();
+                setIsInitialRender(false);
+            }}
             ref={ref}
             showScrollIndicator={!shouldUseNarrowLayout}
             sectionTitleStyles={styles.mhn2}
             shouldSingleExecuteRowSelect
             onArrowFocus={onArrowFocus}
+            shouldScrollToFocusedIndex={!isInitialRender}
         />
     );
 }
