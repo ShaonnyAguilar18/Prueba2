@@ -137,7 +137,7 @@ function ReportPreview({
     const iouSettled = ReportUtils.isSettled(iouReportID) || action?.childStatusNum === CONST.REPORT.STATUS_NUM.REIMBURSED;
     const previewMessageOpacity = useSharedValue(1);
     const previewMessageStyle = useAnimatedStyle(() => ({
-        opacity: previewMessageOpacity.value,
+        opacity: previewMessageOpacity.get(),
     }));
     const checkMarkScale = useSharedValue(iouSettled ? 1 : 0);
 
@@ -145,7 +145,7 @@ function ReportPreview({
     const thumbsUpScale = useSharedValue(isApproved ? 1 : 0.25);
     const thumbsUpStyle = useAnimatedStyle(() => ({
         ...styles.defaultCheckmarkWrapper,
-        transform: [{scale: thumbsUpScale.value}],
+        transform: [{scale: thumbsUpScale.get()}],
     }));
 
     const moneyRequestComment = action?.childLastMoneyRequestComment ?? '';
@@ -446,11 +446,11 @@ function ReportPreview({
             return;
         }
 
-        // eslint-disable-next-line react-compiler/react-compiler
-        previewMessageOpacity.value = withTiming(0.75, {duration: CONST.ANIMATION_PAID_DURATION / 2}, () => {
-            // eslint-disable-next-line react-compiler/react-compiler
-            previewMessageOpacity.value = withTiming(1, {duration: CONST.ANIMATION_PAID_DURATION / 2});
-        });
+        previewMessageOpacity.set(
+            withTiming(0.75, {duration: CONST.ANIMATION_PAID_DURATION / 2}, () => {
+                previewMessageOpacity.set(withTiming(1, {duration: CONST.ANIMATION_PAID_DURATION / 2}));
+            }),
+        );
         // We only want to animate the text when the text changes
         // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     }, [previewMessage, previewMessageOpacity]);
@@ -460,12 +460,7 @@ function ReportPreview({
             return;
         }
 
-        if (isPaidAnimationRunning) {
-            // eslint-disable-next-line react-compiler/react-compiler
-            checkMarkScale.value = withDelay(CONST.ANIMATION_PAID_CHECKMARK_DELAY, withSpring(1, {duration: CONST.ANIMATION_PAID_DURATION}));
-        } else {
-            checkMarkScale.value = 1;
-        }
+        checkMarkScale.set(isPaidAnimationRunning ? withDelay(CONST.ANIMATION_PAID_CHECKMARK_DELAY, withSpring(1, {duration: CONST.ANIMATION_PAID_DURATION})) : 1);
     }, [isPaidAnimationRunning, iouSettled, checkMarkScale]);
 
     useEffect(() => {
@@ -473,7 +468,7 @@ function ReportPreview({
             return;
         }
 
-        thumbsUpScale.value = withSpring(1, {duration: 200});
+        thumbsUpScale.set(withSpring(1, {duration: 200}));
     }, [isApproved, thumbsUpScale]);
 
     return (
