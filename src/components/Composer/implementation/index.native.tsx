@@ -57,6 +57,22 @@ function Composer(
         inputCallbackRef(autoFocus ? textInput.current : null);
     }, [autoFocus, inputCallbackRef, autoFocusInputRef]);
 
+    useEffect(() => {
+        if (!textInput.current || !textInput.current.setSelection || !selection || isComposerFullSize) {
+            return;
+        }
+
+        // We are setting selection twice to trigger a scroll to the cursor on toggling to smaller composer size.
+        const timeoutID = setTimeout(() => {
+            textInput.current?.setSelection((selection.start || 1) - 1, selection.start);
+            textInput.current?.setSelection(selection.start, selection.start);
+        }, 0);
+
+        return () => clearTimeout(timeoutID);
+
+        // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+    }, [isComposerFullSize]);
+
     /**
      * Set the TextInput Ref
      * @param {Element} el
